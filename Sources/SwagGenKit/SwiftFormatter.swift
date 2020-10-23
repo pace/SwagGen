@@ -158,7 +158,18 @@ public class SwiftFormatter: CodeFormatter {
                 return getSchemaType(name: name, schema: singleGroupSchema)
             }
 
-            return escapeType(name.upperCamelCased())
+            guard groupSchema.schemas.count <= 11 else {
+                return escapeType(name.upperCamelCased())
+            }
+
+            var schemas: [String] = []
+
+            for schema in groupSchema.schemas {
+                schemas.append(getSchemaType(name: name, schema: schema))
+            }
+
+            return "Poly\(schemas.count)<\(schemas.joined(separator: ","))>"
+
         case .any:
             return templateConfig.getStringOption("anyType") ?? "Any"
         }

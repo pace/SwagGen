@@ -1,6 +1,7 @@
 {% include "Includes/Header.stencil" %}
 
 import Foundation
+import Poly
 
 public class APIRequest<ResponseType: APIResponseValue> {
 
