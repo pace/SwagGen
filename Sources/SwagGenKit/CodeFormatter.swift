@@ -296,6 +296,14 @@ public class CodeFormatter {
                 formProperties = formSchema.properties.map(getPropertyContext)
                 context["isUpload"] = formSchema.properties.contains { $0.schema.isFile }
             }
+            if let schema = requestBody.value.content.protobufSchema {
+                let name = requestBody.name ?? "Body"
+                if let schemaContext = getInlineSchemaContext(schema, name: name) {
+                    requestSchemas.append(schemaContext)
+                }
+                context["body"] = getRequestBodyContext(requestBody)
+                context["bodyProperties"] = schema.properties.map(getPropertyContext)
+            }
         }
         context["requestSchemas"] = requestSchemas
         context["formProperties"] = formProperties
