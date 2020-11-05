@@ -18,7 +18,7 @@ options:
   anyType: Any # override Any in generated models
   numberType: Double # number type without format
   typeAliases:
-    ID: UUID
+    ID: String
     DateTime: Date
     File: Data
   dependencies:
