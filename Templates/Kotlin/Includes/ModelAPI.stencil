@@ -1,6 +1,34 @@
-fun {{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}@Path("{{param.name}}") {{param.name}}: {{param.optionalType}}{% ifnot param.required %} = null{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %})
- {
-  interface {{ tag|upperCamelCase }}Service {
+fun {{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{{param.name}}: {{param.optionalType}}{% ifnot param.required %} = null{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %}) { // TODO("Missing return type")
+  interface {{ type|upperCamelCase }}Service {
       @{{ method|uppercase }}("{{ path }}")
+      {{ type|lowerCamelCase }}({% for param in nonBodyParams %}@Path("{{param.name}}") {{param.name}}: {{param.optionalType}}{% ifnot param.required %} = null{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %}) // TODO("Missing return type")
   }
+
+  private val service: {{ type|upperCamelCase }}Service by lazy {
+      Retrofit.Builder()
+          .client(OkHttpClient.Builder().addInterceptor {
+              it.proceed(
+                  it.request()
+                      .newBuilder()
+                      .header("Device-Id", "foo") // TODO("This needs to be set from the CloudSDK initializer")
+                      .build()
+              )
+          }.build())
+          .baseUrl("https://api.dev.pace.cloud") // TODO("This needs to be set from the CloudSDK initializer")
+          .addConverterFactory(
+              JsonApiConverterFactory.create(
+                  Moshi.Builder().add(
+                      ResourceAdapterFactory.builder()
+                          .add(GasStation::class.java) // TODO("This list needs to be dynamic")
+                          .add(FuelPrice::class.java)
+                          .add(LocationBasedApp::class.java)
+                          .build()
+                  ).build()
+              )
+          )
+          .build()
+          .create({{ type|upperCamelCase }}Service::class.java)
+    }
+
+    return service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{{param.name}}{% ifnot forloop.last %}, {% endif %}{% endfor %})
 }
