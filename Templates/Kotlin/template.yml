@@ -18,25 +18,19 @@ options:
   propertyNames: {} # override property names
   anyType: Any # override Any in generated models
   typeAliases:
-    ID: String
-    DateTime: Date
-    File: Data
   modelDependencies:
-    - name: HasMany
-      path: moe.banana.jsonapi2.HasMany
-    - name: JsonApi
-      path: moe.banana.jsonapi2.JsonApi
-    - name: Resource
-      path: moe.banana.jsonapi2.Resource
-  dependencies:
-    - name:
-      pod: Alamofire
-      github: Alamofire/Alamofire
-      version: 4.9.0
-    - name: Poly
-      pod: Poly
-      github: mattpolzin/Poly
-      version: 2.5.0
+    - path: moe.banana.jsonapi2.HasMany
+    - path: moe.banana.jsonapi2.JsonApi
+    - path: moe.banana.jsonapi2.Resource
+  apiDependencies:
+    - path: com.squareup.moshi.Moshi
+    - path: moe.banana.jsonapi2.JsonApiConverterFactory
+    - path: moe.banana.jsonapi2.ResourceAdapterFactory
+    - path: okhttp3.OkHttpClient
+    - path: retrofit2.Call
+    - path: retrofit2.Retrofit
+    - path: retrofit2.http.GET
+    - path: retrofit2.http.Path
 templateFiles:
   - path: README.md
   - path: build.gradle
@@ -44,3 +38,6 @@ templateFiles:
   - path: Sources/Model.kt
     context: schemas
     destination: "Sources/Models/{{ type }}.kt"
+  - path: Sources/ModelAPI.kt
+    context: operations
+    destination: "Sources/Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}API.kt"

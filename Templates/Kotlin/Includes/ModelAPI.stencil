@@ -1,0 +1,6 @@
+class {{ tag|upperCamelCase }}API {
+  interface {{ tag|upperCamelCase }}Service {
+      @{{ method|uppercase }}("{{ path }}")
+      func {{ type|lowerCamelCase }}({% for param in nonBodyParams %}@Path("{{param.name}}") {{param.name}}: {{param.optionalType}}{% ifnot param.required %} = null{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %})
+  }
+}
