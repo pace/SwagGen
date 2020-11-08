@@ -1,0 +1,30 @@
+{% for property in properties %}
+    {% if property.description %}
+/** {{ property.description }} **/
+    {% endif %}
+  {% if type == "Relationships" %} lateinit var {{ property.name }}: HasMany<{{ property.properties.first.raw.items.properties.type.enum.first|upperCamelCase }}>{% elif property.name != "data" and property.name != "attributes" and property.name != "type" and property.name != "id" %}{% if property.required == true %} lateinit {% endif %} var {{ property.name }}: {{ property.optionalType }}{% endif %}
+{% endfor %}
+{% for property in properties %}
+{% if type == "Relationships" %}
+
+   fun get{{ property.type }}() = {{ property.type|lowerCamelCase }}.get(document)
+{% endif %}
+{% endfor %}
+{% for enum in enums %}
+{% if not enum.isGlobal and enum.enumName != "Type" %}
+
+    {% filter indent:4 %}{% include "Includes/Enum.stencil" enum %}{% endfilter %}
+{% endif %}
+{% endfor %}
+{% for schema in schemas %}
+        {% if schema.type == "Attributes" %}
+        
+        {% for property in schema.properties %}
+    var {{ property.name }}: {{ property.optionalType }}
+        {% endfor %}
+        {% endif %}
+        {% if schema.type != "`Data`" and type != "Relationships" and schema.type != "Attributes" %}
+        
+        {% filter indent:4 %}{% include "Includes/InnerModel.stencil" schema %}{% endfilter %}
+        {% endif %}
+{% endfor %}

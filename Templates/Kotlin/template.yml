@@ -1,0 +1,51 @@
+formatter: kotlin
+options:
+  name: API # the name of the API
+  packageName: cloud.pace.sdk.api
+  fixedWidthIntegers: false # whether to use types like Int32 and Int64
+  mutableModels: true # whether model properties are mutable
+  safeOptionalDecoding: false # set invalid optionals to nil instead of throwing
+  safeArrayDecoding: false # filter out invalid items in array instead of throwing
+  modelPrefix: null # applied to model classes and enums
+  modelSuffix: null # applied to model classes
+  modelType: class # can be struct or class
+  modelInheritance: true # must be false for struct modelType
+  modelProtocol: APIModel # the protocol all models conform to
+  modelNames: {} # override model type names
+  enumNames: {} # override enum type names
+  enumUndecodableCase: false # whether to add undecodable case to enums
+  codableResponses: false # constrains all responses/model to be Codable
+  propertyNames: {} # override property names
+  anyType: Any # override Any in generated models
+  typeAliases:
+  modelDependencies:
+    - path: moe.banana.jsonapi2.HasMany
+    - path: moe.banana.jsonapi2.JsonApi
+    - path: moe.banana.jsonapi2.Resource
+    - path: com.squareup.moshi.Json
+    - path: java.util.*
+  apiDependencies:
+    - path: cloud.pace.sdk.api.API
+    - path: cloud.pace.sdk.api.model.*
+    - path: com.squareup.moshi.Moshi
+    - path: com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+    - path: moe.banana.jsonapi2.JsonApiConverterFactory
+    - path: moe.banana.jsonapi2.ResourceAdapterFactory
+    - path: okhttp3.OkHttpClient
+    - path: retrofit2.Call
+    - path: retrofit2.Retrofit
+    - path: retrofit2.http.*
+    - path: java.util.*
+    - path: cloud.pace.sdk.api.API.toIso8601
+    - path: com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+
+templateFiles:
+  - path: README.md
+  - path: Sources/API.kt
+    destination: "api/API.kt"
+  - path: Sources/Model.kt
+    context: schemas
+    destination: "api/model/{{ type }}.kt"
+  - path: Sources/ModelAPI.kt
+    context: operations
+    destination: "api/request{% if tag %}/{{ tag|lowerCamelCase }}{% endif %}/{{ type }}API.kt"

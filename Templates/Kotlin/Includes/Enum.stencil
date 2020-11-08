@@ -1,0 +1,8 @@
+{% if description %}
+/** {{ description }} **/
+{% endif %}
+enum class {{ enumName }}(val value: String) {
+    {% for enumCase in enums %}
+    {{ enumCase.name|uppercase }}{% if type == "String" %}("{{ enumCase.value }}"){% endif %}{% ifnot forloop.last %},{% endif %}
+    {% endfor %}
+}
