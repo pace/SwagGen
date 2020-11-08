@@ -14,6 +14,10 @@ object {{ options.name }} {
     {% if tags %}
 
     {% for tag in tags %}
+    class {{ tag|upperCamelCase }}API {}
+    {% endfor %}
+
+    {% for tag in tags %}
     val {{ options.tagPrefix }}{{ tag|lowerCamelCase }}{{ options.tagSuffix }}: {{ tag|upperCamelCase }}API by lazy { {{ tag|upperCamelCase }}API() }
     {% endfor %}
     {% endif %}

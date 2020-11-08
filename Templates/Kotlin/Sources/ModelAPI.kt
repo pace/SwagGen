@@ -1,6 +1,6 @@
 {% include "Includes/Header.stencil" %}
 
-package {{ options.packageName }}
+package {{ options.packageName }}.extensions
 
 {% for dependency in options.modelDependencies %}
 import {{ dependency.path }}
