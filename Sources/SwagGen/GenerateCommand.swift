@@ -174,6 +174,8 @@ class GenerateCommand: Command {
             switch formatter {
             case "swift":
                 codeFormatter = SwiftFormatter(spec: spec, templateConfig: templateConfig)
+            case "kotlin":
+                codeFormatter = KotlinFormatter(spec: spec, templateConfig: templateConfig)
             default:
                 codeFormatter = CodeFormatter(spec: spec, templateConfig: templateConfig)
                 standardOut("Unrecognized formatter \(formatter). Using default")
