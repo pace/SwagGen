@@ -9,6 +9,7 @@ public struct Content {
         case form = "application/x-www-form-urlencoded"
         case xml = "application/xml"
         case multipartForm = "multipart/form-data"
+        case protobuf = "application/protobuf"
         case text = "text/plain"
     }
 
@@ -30,6 +31,10 @@ public struct Content {
 
     public var xmlSchema: Schema? {
         return getMediaItem(.xml)?.schema
+    }
+
+    public var protobufSchema: Schema? {
+        return getMediaItem(.protobuf)?.schema
     }
 }
 

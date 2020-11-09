@@ -17,7 +17,7 @@ options:
   propertyNames: {} # override property names
   anyType: Any # override Any in generated models
   typeAliases:
-    ID: UUID
+    ID: String
     DateTime: Date
     File: Data
   dependencies:
