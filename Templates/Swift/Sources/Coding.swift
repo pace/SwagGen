@@ -1,7 +1,6 @@
 {% include "Includes/Header.stencil" %}
 
 import Foundation
-import Poly
 
 {% if options.modelProtocol %}
 public protocol {{ options.modelProtocol }}: Codable, Equatable { }

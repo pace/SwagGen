@@ -1,7 +1,6 @@
 {% include "Includes/Header.stencil" %}
 
 import Foundation
-import Poly
 
 public protocol RequestBehaviour {
 
