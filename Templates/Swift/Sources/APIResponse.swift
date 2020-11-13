@@ -2,7 +2,6 @@
 
 import Foundation
 import Alamofire
-import Poly
 
 public protocol APIResponseValue: CustomDebugStringConvertible, CustomStringConvertible {
     associatedtype SuccessType{% if options.codableResponses %} : Codable{% endif %}

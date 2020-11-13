@@ -20,38 +20,33 @@ options:
     ID: String
     DateTime: Date
     File: Data
-  dependencies:
-    - name: Alamofire
-      pod: Alamofire
-      github: Alamofire/Alamofire
-      version: 4.9.0
-    - name: Poly
-      pod: Poly
-      github: mattpolzin/Poly
-      version: 2.5.0
 templateFiles:
-  - path: README.md
-  - path: Package.swift
-  - path: Cartfile
-  - path: Info.plist
   - path: Sources/API.swift
+    destination: "API.swift"
   - path: Sources/Coding.swift
+    destination: "Coding.swift"
   - path: Sources/APIRequest.swift
+    destination: "APIRequest.swift"
   - path: Sources/APIClient.swift
+    destination: "APIClient.swift"
   - path: Sources/APIService.swift
+    destination: "APIService.swift"
   - path: Sources/APIClientError.swift
+    destination: "APIClientError.swift"
   - path: Sources/APIResponse.swift
+    destination: "APIResponse.swift"
   - path: Sources/APIResult.swift
+    destination: "APIResult.swift"
   - path: Sources/RequestBehaviour.swift
+    destination: "RequestBehaviour.swift"
   - path: Sources/AnyCodable.swift
-  - path: Podspec.podspec
-    destination: "{{ options.name }}.podspec"
+    destination: "AnyCodable.swift"
   - path: Sources/Enum.swift
     context: enums
-    destination: "Sources/Enums/{{ enumName }}.swift"
+    destination: "Enums/{{ enumName }}.swift"
   - path: Sources/Model.swift
     context: schemas
-    destination: "Sources/Models/{{ type }}.swift"
+    destination: "Models/{{ type }}.swift"
   - path: Sources/Request.swift
     context: operations
     destination: "Sources/Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}.swift"
