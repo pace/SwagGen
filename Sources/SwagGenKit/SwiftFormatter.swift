@@ -203,8 +203,14 @@ public class SwiftFormatter: CodeFormatter {
             }
             encodedValue += ".joined(separator: \"\(collectionFormat.separator)\")"
         }
-        if !parameter.required, let range = encodedValue.range(of: ".") {
-            encodedValue = encodedValue.replacingOccurrences(of: ".", with: "?.", options: [], range: range)
+        if !parameter.required {
+            if let range = encodedValue.range(of: ".") {
+                encodedValue = encodedValue.replacingOccurrences(of: ".", with: "?.", options: [], range: range)
+                encodedValue += " ?? \"\""
+            }
+            if type == "String" {
+                encodedValue += " ?? \"\""
+            }
         }
         context["encodedValue"] = encodedValue
         context["isAnyType"] = type.contains("Any")
