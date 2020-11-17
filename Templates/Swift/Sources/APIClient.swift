@@ -2,7 +2,6 @@
 
 import Foundation
 import Alamofire
-import Poly
 
 /// Manages and sends APIRequests
 public class APIClient {
