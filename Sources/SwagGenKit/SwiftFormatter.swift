@@ -186,7 +186,7 @@ public class SwiftFormatter: CodeFormatter {
         return context
     }
 
-    override func getParameterContext(_ parameter: Parameter) -> Context {
+    override func getPathParamsContext(_ parameter: Parameter) -> Context {
         var context = super.getParameterContext(parameter)
 
         let type = context["type"] as! String
@@ -210,6 +210,33 @@ public class SwiftFormatter: CodeFormatter {
             }
             if type == "String" {
                 encodedValue += " ?? \"\""
+            }
+        }
+        context["encodedValue"] = encodedValue
+        context["isAnyType"] = type.contains("Any")
+        return context
+    }
+
+    override func getParameterContext(_ parameter: Parameter) -> Context {
+        var context = super.getParameterContext(parameter)
+
+        let type = context["type"] as! String
+        let name = context["name"] as! String
+
+        context["optionalType"] = type + (parameter.required ? "" : "?")
+        var encodedValue = getEncodedValue(name: getName(name), type: type)
+
+        if case let .schema(schema) = parameter.type,
+            case .array = schema.schema.type,
+            let collectionFormat = schema.collectionFormat {
+            if type != "[String]" {
+                encodedValue += ".map({ String(describing: $0) })"
+            }
+            encodedValue += ".joined(separator: \"\(collectionFormat.separator)\")"
+        }
+        if !parameter.required {
+            if let range = encodedValue.range(of: ".") {
+                encodedValue = encodedValue.replacingOccurrences(of: ".", with: "?.", options: [], range: range)
             }
         }
         context["encodedValue"] = encodedValue

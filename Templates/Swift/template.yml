@@ -1,6 +1,6 @@
 formatter: swift
 options:
-  name: API # the name of the API
+  name: POIAPI # the name of the API
   fixedWidthIntegers: false # whether to use types like Int32 and Int64
   mutableModels: true # whether model properties are mutable
   safeOptionalDecoding: false # set invalid optionals to nil instead of throwing
@@ -22,7 +22,7 @@ options:
     File: Data
 templateFiles:
   - path: Sources/API.swift
-    destination: "API.swift"
+    destination: "POIAPI.swift"
   - path: Sources/Coding.swift
     destination: "Coding.swift"
   - path: Sources/APIRequest.swift
@@ -49,4 +49,4 @@ templateFiles:
     destination: "Models/{{ type }}.swift"
   - path: Sources/Request.swift
     context: operations
-    destination: "Sources/Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}.swift"
+    destination: "Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}.swift"

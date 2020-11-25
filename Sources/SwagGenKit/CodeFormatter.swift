@@ -260,7 +260,7 @@ public class CodeFormatter {
         let params = operation.parameters.map { $0.value }
 
         context["params"] = params.map(getParameterContext)
-        context["pathParams"] = operation.getParameters(type: .path).map(getParameterContext)
+        context["pathParams"] = operation.getParameters(type: .path).map(getPathParamsContext)
         context["queryParams"] = operation.getParameters(type: .query).map(getParameterContext)
         context["headerParams"] = operation.getParameters(type: .header).map(getParameterContext)
         context["cookieParams"] = operation.getParameters(type: .cookie).map(getParameterContext)
@@ -386,6 +386,34 @@ public class CodeFormatter {
         context["name"] = securityRequirement.name
         context["scopes"] = securityRequirement.scopes
         context["scope"] = securityRequirement.scopes.first
+
+        return context
+    }
+
+    func getPathParamsContext(_ parameter: Parameter) -> Context {
+        var context: Context = [:]
+
+        context["raw"] = parameter.json
+        context["name"] = getName(parameter.name)
+        context["value"] = parameter.name
+        context["example"] = parameter.example
+        context["required"] = parameter.required
+        context["optional"] = !parameter.required
+        context["parameterType"] = parameter.location.rawValue
+        context["description"] = parameter.description
+
+        if let schema = parameter.schema,
+            case .array = schema.type {
+            context["isArray"] = true
+        }
+        switch parameter.type {
+        case let .content(content):
+            if let schema = content.defaultSchema {
+                context["type"] = getSchemaType(name: parameter.name, schema: schema)
+            }
+        case let .schema(schema):
+            context["type"] = getSchemaType(name: parameter.name, schema: schema.schema)
+        }
 
         return context
     }
