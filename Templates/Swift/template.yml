@@ -42,6 +42,8 @@ templateFiles:
     destination: "RequestBehaviour.swift"
   - path: Sources/AnyCodable.swift
     destination: "AnyCodable.swift"
+  - path: Sources/URLEncoding.swift
+    destination: "URLEncoding.swift"
   - path: Sources/Enum.swift
     context: enums
     destination: "Enums/{{ enumName }}.swift"

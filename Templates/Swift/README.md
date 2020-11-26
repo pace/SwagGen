@@ -42,7 +42,7 @@ public init(baseURL: String, sessionManager: SessionManager = .default, defaultH
 
 - `baseURL`: The base url that every request `path` will be appended to
 - `behaviours`: A list of [Request Behaviours](#requestbehaviour) to add to every request
-- `sessionManager`: An `Alamofire.SessionManager` that can be customized
+- `session`: An `URLSession` that can be customized
 - `defaultHeaders`: Headers that will be applied to every request
 - `decodingQueue`: The `DispatchQueue` to decode responses on
 
@@ -84,7 +84,6 @@ The `APIResponse` that gets passed to the completion closure contains the follow
 - `urlRequest`: The `URLRequest` used to send the request
 - `urlResponse`: The `HTTPURLResponse` that was returned by the request
 - `data`: The `Data` returned by the request.
-- `timeline`: The `Alamofire.Timeline` of the request which contains timing information.
 
 #### Encoding and Decoding
 Only JSON requests and responses are supported. These are encoded and decoded by `JSONEncoder` and `JSONDecoder` respectively, using Swift's `Codable` apis.

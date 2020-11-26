@@ -1,7 +1,6 @@
 {% include "Includes/Header.stencil" %}
 
 import Foundation
-import Alamofire
 
 public protocol APIResponseValue: CustomDebugStringConvertible, CustomStringConvertible {
     associatedtype SuccessType{% if options.codableResponses %} : Codable{% endif %}
@@ -56,16 +55,12 @@ public struct APIResponse<T: APIResponseValue> {
     /// The data returned by the server.
     public let data: Data?
 
-    /// The timeline of the complete lifecycle of the request.
-    public let timeline: Timeline?
-
-    init(request: APIRequest<T>, result: APIResult<T>, urlRequest: URLRequest? = nil, urlResponse: HTTPURLResponse? = nil, data: Data? = nil, timeline: Timeline? = nil) {
+    init(request: APIRequest<T>, result: APIResult<T>, urlRequest: URLRequest? = nil, urlResponse: HTTPURLResponse? = nil, data: Data? = nil) {
         self.request = request
         self.result = result
         self.urlRequest = urlRequest
         self.urlResponse = urlResponse
         self.data = data
-        self.timeline = timeline
     }
 }
 
