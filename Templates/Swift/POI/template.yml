@@ -1,0 +1,63 @@
+formatter: swift
+options:
+  name: POIAPI # the name of the API
+  fixedWidthIntegers: false # whether to use types like Int32 and Int64
+  mutableModels: true # whether model properties are mutable
+  modelPrefix: "PCPOI" # applied to model classes and enums
+  modelSuffix: null # applied to model classes
+  modelType: class # can be struct or class
+  modelInheritance: true # must be false for struct modelType
+  modelProtocol: APIModel # the protocol all models conform to
+  modelNames: {} # override model type names
+  enumNames: {} # override enum type names
+  enumUndecodableCase: false # whether to add undecodable case to enums
+  codableResponses: false # constrains all responses/model to be Codable
+  propertyNames: {} # override property names
+  anyType: Any # override Any in generated models
+  baseURL: "https://api.pace.cloud/poi" # override given base url from swagger file
+  typeAliases:
+    ID: String
+    DateTime: Date
+    File: Data
+templateFiles:
+  - path: Common/README.md
+    destination: "README.md"
+  - path: Common/API.swift
+    destination: "POIAPI.swift"
+  - path: Common/Coding.swift
+    destination: "./../../Generated/Common/Coding.swift"
+  - path: Common/AnyResponse.swift
+    destination: "./../../Generated/Common/AnyResponse.swift"
+  - path: Common/APIRequestUtils.swift
+    destination: "./../../Generated/Common/APIRequestUtils.swift"
+  - path: Common/APIRequest.swift
+    destination: "POIAPIRequest.swift"
+  - path: Common/AnyRequest.swift
+    destination: "AnyPOIRequest.swift"
+  - path: Common/APIClient.swift
+    destination: "POIAPIClient.swift"
+  - path: Common/APIService.swift
+    destination: "POIAPIService.swift"
+  - path: Common/APIClientError.swift
+    destination: "./../../Generated/Common/APIClientError.swift"
+  - path: Common/APIResponseUtils.swift
+    destination: "./../../Generated/Common/APIResponseUtils.swift"
+  - path: Common/APIResponse.swift
+    destination: "POIAPIResponse.swift"
+  - path: Common/APIResult.swift
+    destination: "./../../Generated/Common/APIResult.swift"
+  - path: Common/RequestBehaviour.swift
+    destination: "POIRequestBehaviour.swift"
+  - path: Common/AnyCodable.swift
+    destination: "./../../Generated/Common/AnyCodable.swift"
+  - path: Common/URLEncoding.swift
+    destination: "./../../Generated/Common/URLEncoding.swift"
+  - path: Common/Enum.swift
+    context: enums
+    destination: "Enums/{{ enumName }}.swift"
+  - path: Common/Model.swift
+    context: schemas
+    destination: "./../../Generated/Models/{{ type }}.swift"
+  - path: Common/Request.swift
+    context: operations
+    destination: "Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}.swift"

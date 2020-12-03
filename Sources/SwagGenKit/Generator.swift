@@ -26,7 +26,7 @@ public class Generator {
         stencilSwiftKitExtension.registerStencilSwiftExtensions()
 
         environment = Environment(
-            loader: FileSystemLoader(paths: [templateConfig.basePath]),
+            loader: FileSystemLoader(paths: [templateConfig.basePath.parent(), templateConfig.basePath]),
             extensions: [filterExtension, stencilSwiftKitExtension],
             templateClass: SwagGenStencilTemplate.self
         )

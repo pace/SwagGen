@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 import Foundation
 
@@ -7,17 +7,11 @@ import Foundation
 {% endif %}
 public struct {{ options.name }} {
 
-    /// Whether to discard any errors when decoding optional properties
-    public static var safeOptionalDecoding = {% if options.safeOptionalDecoding %}true{% else %}false{% endif %}
-
-    /// Whether to remove invalid elements instead of throwing when decoding arrays
-    public static var safeArrayDecoding = {% if options.safeArrayDecoding %}true{% else %}false{% endif %}
-
     /// Used to encode Dates when uses as string params
     public static var dateEncodingFormatter = DateFormatter(formatString: "yyyy-MM-dd'T'HH:mm:ssZZZZZ",
                                                             locale: Locale(identifier: "en_US_POSIX"),
                                                             calendar: Calendar(identifier: .gregorian))
-    
+
     {% if info.version %}
     public static let version = "{{ info.version }}"
     {% endif %}
@@ -29,9 +23,8 @@ public struct {{ options.name }} {
     {% endif %}
     {% if servers %}
 
-    public enum Server {
+    public enum {{ options.name }}Server {
         {% for server in servers %}
-        
         {% if server.description %}
         /** {{ server.description }} **/
         {% endif %}
@@ -53,3 +46,4 @@ public struct {{ options.name }} {
     // No servers defined in swagger. Documentation for adding them: https://swagger.io/specification/#schema
     {% endif %}
 }
+

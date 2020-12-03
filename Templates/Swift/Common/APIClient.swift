@@ -1,14 +1,14 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 import Foundation
 
 /// Manages and sends APIRequests
-public class APIClient {
+public class {{ options.name }}Client {
 
-    public static var `default` = APIClient(baseURL: {% if options.baseURL %}"{{ options.baseURL }}"{% elif defaultServer %}{{ options.name }}.Server.{{ defaultServer.name }}{% else %}""{% endif %})
+    public static var `default` = {{ options.name }}Client(baseURL: {% if options.baseURL %}"{{ options.baseURL }}"{% elif defaultServer %}{{ options.name }}.PayServer.{{ defaultServer.name }}{% else %}""{% endif %})
 
     /// A list of RequestBehaviours that can be used to monitor and alter all requests
-    public var behaviours: [RequestBehaviour] = []
+    public var behaviours: [{{ options.name }}RequestBehaviour] = []
 
     /// The base url prepended before every request path
     public var baseURL: String
@@ -22,14 +22,14 @@ public class APIClient {
     public var jsonDecoder = JSONDecoder()
     public var jsonEncoder = JSONEncoder()
 
-    public var decodingQueue = DispatchQueue(label: "apiClient", qos: .utility, attributes: .concurrent)
+    public var decodingQueue = DispatchQueue(label: "{{ options.name }}Client", qos: .utility, attributes: .concurrent)
 
-    public init(baseURL: String, configuration: URLSessionConfiguration = .default, defaultHeaders: [String: String] = [:], behaviours: [RequestBehaviour] = []) {
+    public init(baseURL: String, configuration: URLSessionConfiguration = .default, defaultHeaders: [String: String] = [:], behaviours: [{{ options.name }}RequestBehaviour] = []) {
         self.baseURL = baseURL
         self.behaviours = behaviours
         self.defaultHeaders = defaultHeaders
         jsonDecoder.dateDecodingStrategy = .custom(dateDecoder)
-        jsonEncoder.dateEncodingStrategy = .formatted(POIAPI.dateEncodingFormatter)
+        jsonEncoder.dateEncodingStrategy = .formatted({{ options.name }}.dateEncodingFormatter)
         self.session = URLSession(configuration: configuration, delegate: nil, delegateQueue: OperationQueue())
     }
 
@@ -39,12 +39,12 @@ public class APIClient {
     ///   - request: The API request to make
     ///   - behaviours: A list of behaviours that will be run for this request. Merged with APIClient.behaviours
     ///   - completionQueue: The queue that complete will be called on
-    ///   - complete: A closure that gets passed the APIResponse
+    ///   - complete: A closure that gets passed the {{ options.name }}Response
     /// - Returns: A cancellable request. Not that cancellation will only work after any validation RequestBehaviours have run
     @discardableResult
-    public func makeRequest<T>(_ request: APIRequest<T>, behaviours: [RequestBehaviour] = [], completionQueue: DispatchQueue = DispatchQueue.main, complete: @escaping (APIResponse<T>) -> Void) -> CancellableRequest? {
+    public func makeRequest<T>(_ request: {{ options.name }}Request<T>, behaviours: [{{ options.name }}RequestBehaviour] = [], completionQueue: DispatchQueue = DispatchQueue.main, complete: @escaping ({{ options.name }}Response<T>) -> Void) -> Cancellable{{ options.name }}Request? {
         // create composite behaviour to make it easy to call functions on array of behaviours
-        let requestBehaviour = RequestBehaviourGroup(request: request, behaviours: self.behaviours + behaviours)
+        let requestBehaviour = {{ options.name }}RequestBehaviourGroup(request: request, behaviours: self.behaviours + behaviours)
 
         // create the url request from the request
         var urlRequest: URLRequest
@@ -53,7 +53,7 @@ public class APIClient {
         } catch {
             let error = APIClientError.requestEncodingError(error)
             requestBehaviour.onFailure(error: error)
-            let response = APIResponse<T>(request: request, result: .failure(error))
+            let response = {{ options.name }}Response<T>(request: request, result: .failure(error))
             complete(response)
             return nil
         }
@@ -68,7 +68,7 @@ public class APIClient {
 
         urlRequest = requestBehaviour.modifyRequest(urlRequest)
 
-        let cancellableRequest = CancellableRequest(request: request.asAny())
+        let cancellableRequest = Cancellable{{ options.name }}Request(request: request.asAny())
 
         requestBehaviour.validate(urlRequest) { result in
             switch result {
@@ -76,7 +76,7 @@ public class APIClient {
                 self.makeNetworkRequest(request: request, urlRequest: urlRequest, cancellableRequest: cancellableRequest, requestBehaviour: requestBehaviour, completionQueue: completionQueue, complete: complete)
             case .failure(let error):
                 let error = APIClientError.validationError(error)
-                let response = APIResponse<T>(request: request, result: .failure(error), urlRequest: urlRequest)
+                let response = {{ options.name }}Response<T>(request: request, result: .failure(error), urlRequest: urlRequest)
                 requestBehaviour.onFailure(error: error)
                 complete(response)
             }
@@ -84,7 +84,7 @@ public class APIClient {
         return cancellableRequest
     }
 
-    private func makeNetworkRequest<T>(request: APIRequest<T>, urlRequest: URLRequest, cancellableRequest: CancellableRequest, requestBehaviour: RequestBehaviourGroup, completionQueue: DispatchQueue, complete: @escaping (APIResponse<T>) -> Void) {
+    private func makeNetworkRequest<T>(request: {{ options.name }}Request<T>, urlRequest: URLRequest, cancellableRequest: Cancellable{{ options.name }}Request, requestBehaviour: {{ options.name }}RequestBehaviourGroup, completionQueue: DispatchQueue, complete: @escaping ({{ options.name }}Response<T>) -> Void) {
         requestBehaviour.beforeSend()
         if request.service.isUpload {
             let body = NSMutableData()
@@ -146,7 +146,7 @@ public class APIClient {
                         let result: APIResult<T> = .failure(apiError)
                         requestBehaviour.onFailure(error: apiError)
 
-                        let response = APIResponse<T>(request: request, result: result, urlRequest: urlRequest)
+                        let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest)
                         requestBehaviour.onResponse(response: response.asAny())
 
                         completionQueue.async {
@@ -175,21 +175,21 @@ public class APIClient {
         }
     }
 
-    private func handleResponse<T>(request: APIRequest<T>,
-                                   requestBehaviour: RequestBehaviourGroup,
+    private func handleResponse<T>(request: {{ options.name }}Request<T>,
+                                   requestBehaviour: {{ options.name }}RequestBehaviourGroup,
                                    data: Data?,
                                    response: HTTPURLResponse,
                                    error: Error?,
                                    urlRequest: URLRequest,
                                    completionQueue: DispatchQueue,
-                                   complete: @escaping (APIResponse<T>) -> Void) {
+                                   complete: @escaping ({{ options.name }}Response<T>) -> Void) {
         let result: APIResult<T>
 
         if let error = error {
             let apiError = APIClientError.networkError(error)
             result = .failure(apiError)
             requestBehaviour.onFailure(error: apiError)
-            let response = APIResponse<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
+            let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
             requestBehaviour.onResponse(response: response.asAny())
 
             completionQueue.async {
@@ -221,7 +221,7 @@ public class APIClient {
             requestBehaviour.onFailure(error: apiError)
         }
 
-        let response = APIResponse<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
+        let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
         requestBehaviour.onResponse(response: response.asAny())
 
         completionQueue.async {
@@ -229,82 +229,3 @@ public class APIClient {
         }
     }
 }
-
-public class CancellableRequest {
-    /// The request used to make the actual network request
-    public let request: AnyRequest
-
-    init(request: AnyRequest) {
-        self.request = request
-    }
-    var sessionTask: URLSessionTask?
-
-    /// cancels the request
-    public func cancel() {
-        if let sessionTask = sessionTask {
-            sessionTask.cancel()
-        }
-    }
-}
-
-// Helper extension for sending requests
-extension APIRequest {
-
-    /// makes a request using the default APIClient. Change your baseURL in APIClient.default.baseURL
-    public func makeRequest(complete: @escaping (APIResponse<ResponseType>) -> Void) {
-        APIClient.default.makeRequest(self, complete: complete)
-    }
-}
-
-// Create URLRequest
-extension APIRequest {
-
-    /// pass in an optional baseURL, otherwise URLRequest.url will be relative
-    public func createURLRequest(baseURL: String = "", encoder: RequestEncoder = JSONEncoder()) throws -> URLRequest {
-        let urlString = "\(baseURL)\(path)"
-
-        let queryString = URLEncoding.encodeParams(queryParameters)
-
-        let url = URL(string: urlString + "?" + queryString)!
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = service.method
-        urlRequest.allHTTPHeaderFields = headers
-
-        var formParams = URLComponents()
-        for (key, value) in formParameters {
-            if String.init(describing: value) != "" {
-                formParams.queryItems?.append(URLQueryItem(name: key, value: "\(value)"))
-            }
-        }
-        if !(formParams.queryItems?.isEmpty ?? true) {
-            urlRequest.httpBody = formParams.query?.data(using: .utf8)
-        }
-
-        if let encodeBody = encodeBody {
-            urlRequest.httpBody = try encodeBody(encoder)
-            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
-        return urlRequest
-    }
-}
-
-extension CharacterSet { // Got it from Alamofire, because swift CharacterSet includes colons
-    /// Creates a CharacterSet from RFC 3986 allowed characters.
-    ///
-    /// RFC 3986 states that the following characters are "reserved" characters.
-    ///
-    /// - General Delimiters: ":", "#", "[", "]", "@", "?", "/"
-    /// - Sub-Delimiters: "!", "$", "&", "'", "(", ")", "*", "+", ",", ";", "="
-    ///
-    /// In RFC 3986 - Section 3.4, it states that the "?" and "/" characters should not be escaped to allow
-    /// query strings to include a URL. Therefore, all "reserved" characters with the exception of "?" and "/"
-    /// should be percent-escaped in the query string.
-    public static let apiURLQueryAllowed: CharacterSet = {
-        let generalDelimitersToEncode = ":#[]@" // does not include "?" or "/" due to RFC 3986 - Section 3.4
-        let subDelimitersToEncode = "!$&'()*+,;="
-        let encodableDelimiters = CharacterSet(charactersIn: "\(generalDelimitersToEncode)\(subDelimitersToEncode)")
-
-        return CharacterSet.urlQueryAllowed.subtracting(encodableDelimiters)
-    }()
-}
-

@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 import Foundation
 

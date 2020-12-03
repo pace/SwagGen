@@ -176,6 +176,12 @@ public class SwiftFormatter: CodeFormatter {
         }
     }
 
+    override func getName(_ name: String) -> String {
+        var name = name.replacingOccurrences(of: "^-(\\w)", with: "_desc$1", options: .regularExpression)
+        name = name.lowerCamelCased()
+        return escapeName(name)
+    }
+
     override func getSchemaContext(_ schema: Schema) -> Context {
         var context = super.getSchemaContext(schema)
 
