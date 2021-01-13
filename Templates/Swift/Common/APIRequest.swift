@@ -74,15 +74,6 @@ public class Cancellable{{ options.name }}Request {
     }
 }
 
-// Helper extension for sending requests
-extension {{ options.name }}Request {
-
-    /// makes a request using the default APIClient. Change your baseURL in APIClient.default.baseURL
-    public func makeRequest(complete: @escaping ({{ options.name }}Response<ResponseType>) -> Void) {
-        {{ options.name }}Client.default.makeRequest(self, complete: complete)
-    }
-}
-
 // Create URLRequest
 extension {{ options.name }}Request {
 

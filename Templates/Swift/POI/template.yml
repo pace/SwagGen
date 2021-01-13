@@ -15,6 +15,8 @@ options:
   propertyNames: {} # override property names
   anyType: Any # override Any in generated models
   baseURL: "https://api.pace.cloud/poi" # override given base url from swagger file
+  numberType: Double
+  decimalType: Double
   typeAliases:
     ID: String
     DateTime: Date
