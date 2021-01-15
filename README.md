@@ -22,7 +22,7 @@ It is an alternative the official [swagger-codegen](https://github.com/swagger-a
 `SwagGen` includes a bundled template for generating a client side Swift library for interfacing with the Swagger spec. It includes support for model inheritance, shared enums, discrete and mutable request objects, inline schemas, Codable and Equatable models, configurable options, generic networking stack, and many other niceties.
 
 ## Installing
-Make sure Xcode 10.2 is installed first.
+Make sure Xcode 11+ is installed first.
 
 ### [Mint](https://github.com/yonaskolb/mint)
 ```sh
@@ -58,7 +58,7 @@ $ swift run
 Add the following to your Package.swift file's dependencies:
 
 ```swift
-.package(url: "https://github.com/yonaskolb/SwagGen.git", from: "4.3.0"),
+.package(url: "https://github.com/yonaskolb/SwagGen.git", from: "4.4.0"),
 ```
 
 And then import wherever needed:
@@ -143,6 +143,7 @@ tagPrefix | prefix for all tags | `String` | null
 tagSuffix | suffix for all tags | `String` | null
 codableResponses | constrains all responses to be `Codable` | `Bool` | false
 anyType | override `Any` with custom type | `String` | `Any`
+numberType | override default number type when format not specified | `String` | `Double`
 
 If writing your own Swift template there are a few types that are generated that you will need to provide typealias's for:
 

@@ -2,8 +2,13 @@
 
 ## Next Version
 
+## 4.4.0
+
 ### Added
 - Support multiple authentication types per operation #222 @malteburkert
+- Added support for `decimal` number format #259 @yonaskolb
+- Added `numberType`, `doubleType`, `floatType` and `decimalType` template options #259 @yonaskolb
+- Added support for binary response bodies #224 @Hustenbonbon
 
 ### Fixed
 - Fixed inline allOf group generation
@@ -11,6 +16,12 @@
 - Added `anyType` option that allows to override `Any` in models
 - Fixed date encoding formatter to conform to RFC3339
 - Fixed `.swift-version` to use Swift 5.2 instead of Swift 4.1 #246
+- Fixed Server is not defined issue #197
+
+### Internal
+- SwagGen minimum Swift version is 5.0
+
+[Commits](https://github.com/yonaskolb/SwagGen/compare/4.3.1...4.4.0)
 
 ## 4.3.1
 
