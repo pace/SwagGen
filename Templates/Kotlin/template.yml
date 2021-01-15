@@ -1,7 +1,8 @@
 formatter: kotlin
 options:
   name: API # the name of the API
-  packageName: cloud.pace.sdk.api
+  packageName: cloud.pace.sdk.api.poi.generated
+  apiPackageName: cloud.pace.sdk.api
   fixedWidthIntegers: false # whether to use types like Int32 and Int64
   mutableModels: true # whether model properties are mutable
   safeOptionalDecoding: false # set invalid optionals to nil instead of throwing
@@ -26,7 +27,7 @@ options:
     - path: java.util.*
   apiDependencies:
     - path: cloud.pace.sdk.api.API
-    - path: cloud.pace.sdk.api.model.*
+    - path: cloud.pace.sdk.api.poi.generated.model.*
     - path: com.squareup.moshi.Moshi
     - path: com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
     - path: moe.banana.jsonapi2.JsonApiConverterFactory
@@ -38,6 +39,8 @@ options:
     - path: java.util.*
     - path: cloud.pace.sdk.api.API.toIso8601
     - path: com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+    - path: cloud.pace.sdk.poikit.utils.InterceptorUtils
+
 
 templateFiles:
   - path: README.md
