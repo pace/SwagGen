@@ -84,7 +84,7 @@ extension {{ options.name }}Request {
         }
 
         urlComponents.path += "\(path)"
-        urlComponents.queryItems = URLEncoding.encodeParams(queryParameters).map { URLQueryItem(name: $0.0, value: $0.1) }
+        urlComponents.percentEncodedQueryItems = URLEncoding.encodeParams(queryParameters).map { URLQueryItem(name: $0.0, value: $0.1) }
 
         let url = urlComponents.url!
         var urlRequest = URLRequest(url: url)
