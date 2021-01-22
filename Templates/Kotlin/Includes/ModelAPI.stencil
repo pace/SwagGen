@@ -3,7 +3,7 @@ interface {{ type|upperCamelCase }}Service {
     {% if description %}
     /** {{ description }} **/
     {% endif %}
-    @{{ method|uppercase }}("{{ path }}")
+    @{{ method|uppercase }}("{% for part in path | split:"/" %}{{ part }}{% ifnot forloop.first %}{% ifnot forloop.last %}/{% endif %}{% endif %}{% endfor %}")
     fun {{ type|lowerCamelCase }}(
         {% for param in nonBodyParams %}
         {% if param.value in path %}@Path{% else %}@Query{% endif %}("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null {% else %}{{ param.optionalType }}{% endif %}{% ifnot forloop.last %},{% endif %}
@@ -11,22 +11,9 @@ interface {{ type|upperCamelCase }}Service {
     ): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}List<{{successResponse.schema.type}}>{% else %}Void{% endif %}>
 }
 
-
 private val service: {{ type|upperCamelCase }}Service by lazy {
     Retrofit.Builder()
-        .client(OkHttpClient.Builder().addInterceptor {
-            val builder = it.request()
-                .newBuilder()
-                {% for item in raw.responses.200.content %}.header("Accept", "{{ item }}"){% endfor %}
-                {% for item in raw.responses.200.content %}.header("Content-Type", "{{ item }}"){% endfor %}
-                .header("API-Key", API.apiKey)
-
-            API.additionalHeaders.forEach { header ->
-                builder.header(header.key, header.value)
-            }
-
-            it.proceed(builder.build())
-        }.build())
+        .client(OkHttpClient.Builder().addInterceptor(InterceptorUtils.getInterceptor({% for item in raw.responses.200.content %}"{{ item }}"{% empty %}null{% endfor %}, {% for item in raw.responses.200.content %}"{{ item }}"{% empty %}null{% endfor %})).build())
         .baseUrl(API.baseUrl)
             .addConverterFactory(
                 JsonApiConverterFactory.create(
@@ -53,7 +40,7 @@ private val service: {{ type|upperCamelCase }}Service by lazy {
 }
 
 fun API.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{{ param.name }}: {{ param.optionalType }}{% ifnot forloop.last %}, {% endif %}{% endfor %}): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}List<{{successResponse.schema.type}}>{% else %}Void{% endif %}> {
-    return service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)+'Z' {% else %}{{param.name}}{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %})
+    return service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)?.let { it +'Z'} {% else %}{{param.name}}{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %})
 }
 
 

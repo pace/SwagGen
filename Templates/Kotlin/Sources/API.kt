@@ -1,6 +1,6 @@
 {% include "Includes/Header.stencil" %}
 
-package {{ options.packageName }}
+package {{ options.apiPackageName }}
 
 import java.text.SimpleDateFormat
 import java.util.*
