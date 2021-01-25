@@ -10,6 +10,7 @@ public class CodeFormatter {
     var enums: [Enum] = []
     let templateConfig: TemplateConfig
     var modelPrefix: String
+    var requestPrefix: String
     var modelSuffix: String
     var modelInheritance: Bool
     var modelNames: [String: String]
@@ -20,6 +21,7 @@ public class CodeFormatter {
         self.spec = spec
         self.templateConfig = templateConfig
         modelPrefix = templateConfig.getStringOption("modelPrefix") ?? ""
+        requestPrefix = templateConfig.getStringOption("requestPrefix") ?? ""
         modelSuffix = templateConfig.getStringOption("modelSuffix") ?? ""
         modelInheritance = templateConfig.getBooleanOption("modelInheritance") ?? true
         modelNames = templateConfig.options["modelNames"] as? [String: String] ?? [:]

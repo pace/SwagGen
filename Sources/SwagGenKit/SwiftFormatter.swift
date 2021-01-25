@@ -193,6 +193,20 @@ public class SwiftFormatter: CodeFormatter {
         return context
     }
 
+    override func getOperationContext(_ operation: Swagger.Operation) -> Context {
+        var context = super.getOperationContext(operation)
+        if let operationId = operation.identifier {
+            context["fileName"] = escapeType("\(requestPrefix)\(operationId.upperCamelCased())")
+        } else {
+            let pathParts = operation.path.components(separatedBy: "/")
+            var pathName = pathParts.map { $0.upperCamelCased() }.joined(separator: "")
+            pathName = pathName.replacingOccurrences(of: "\\{(.*?)\\}", with: "By_$1", options: .regularExpression, range: nil)
+            let generatedOperationId = operation.method.rawValue.lowercased() + pathName.upperCamelCased()
+            context["fileName"] = escapeType("\(requestPrefix)\(generatedOperationId.upperCamelCased())")
+        }
+        return context
+    }
+
     override func getPathParamsContext(_ parameter: Parameter) -> Context {
         var context = super.getParameterContext(parameter)
 
