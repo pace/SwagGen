@@ -39,15 +39,19 @@ public class KotlinFormatter: CodeFormatter {
         ]
     }
 
-    var inbuiltTypes: [String] = [
-        "Error",
-        "Data",
-    ]
-
-    override var disallowedNames: [String] { return disallowedKeywords + inbuiltTypes }
-    override var disallowedTypes: [String] { return disallowedKeywords + inbuiltTypes }
+    override var disallowedNames: [String] { return disallowedKeywords }
+    override var disallowedTypes: [String] { return disallowedKeywords }
     
     override func getSchemaType(name: String, schema: Schema, checkEnum: Bool = true) -> String {
+        var enumValue: String?
+        if checkEnum {
+            enumValue = schema.getEnum(name: name, description: "").flatMap { getEnumContext($0)["enumName"] as? String }
+        }
+
+        if schema.canBeEnum, let enumValue = enumValue {
+            return enumValue
+        }
+        
         switch schema.type {
         case .boolean:
             return "Boolean"
@@ -81,11 +85,11 @@ public class KotlinFormatter: CodeFormatter {
             return "Int"
         case let .array(arraySchema):
             switch arraySchema.items {
-            case let .single(type):
-                let typeString = getSchemaType(name: name, schema: type, checkEnum: checkEnum)
+            case let .single(schema):
+                let typeString = getSchemaType(name: name, schema: schema, checkEnum: checkEnum)
                 return "List<\(typeString)>"
-            case let .multiple(types):
-                let typeString = getSchemaType(name: name, schema: types.first!, checkEnum: checkEnum)
+            case let .multiple(schemas):
+                let typeString = getSchemaType(name: name, schema: schemas.first!, checkEnum: checkEnum)
                 return "List<\(typeString)>"
             }
         case let .object(schema):
@@ -107,14 +111,35 @@ public class KotlinFormatter: CodeFormatter {
         }
     }
     
+    override func getName(_ name: String) -> String {
+        var name = name.replacingOccurrences(of: "^-(.+)", with: "$1_Descending", options: .regularExpression)
+        name = name.lowerCamelCased()
+        return escapeName(name)
+    }
+    
     override func getSchemaContext(_ schema: Schema) -> Context {
         var context = super.getSchemaContext(schema)
-
+        
+        var isPrimitiveType: Bool {
+            switch schema.type {
+            case .boolean, .number, .integer: return true
+            default: return false
+            }
+        }
+        context["isPrimitiveType"] = isPrimitiveType
+        
         if let objectSchema = schema.type.object,
-            let additionalProperties = objectSchema.additionalProperties {
+           let additionalProperties = objectSchema.additionalProperties {
             context["additionalPropertiesType"] = getSchemaType(name: "Anonymous", schema: additionalProperties)
         }
-
+        
+        let properties = context["properties"] as? [Context]
+        let names = properties?.compactMap { $0["name"] as? String } ?? []
+        context["isResource"] = ["id", "type"].allSatisfy(names.contains)
+        context["attributes"] = properties?.filter({($0["name"] as! String) == "attributes"})
+        context["relationships"] = properties?.filter({($0["name"] as! String) == "relationships"})
+        context["properties"] = properties?.filter({($0["name"] as! String) != "id" && ($0["name"] as! String) != "type" && ($0["name"] as! String) != "attributes" && ($0["name"] as! String) != "relationships"})
+        
         return context
     }
 

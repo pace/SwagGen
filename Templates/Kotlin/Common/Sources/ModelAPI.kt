@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 package {{ options.packageName }}.request{% if tag %}.{{ tag|lowerCamelCase }}{% endif %}
 
@@ -6,4 +6,4 @@ package {{ options.packageName }}.request{% if tag %}.{{ tag|lowerCamelCase }}{%
 import {{ dependency.path }}
 {% endfor %}
 
-{% include "Includes/ModelAPI.stencil" %}
+{% include "Common/Includes/ModelAPI.stencil" %}
