@@ -1,16 +1,16 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
-public struct APIService<ResponseType: APIResponseValue> {
+public struct {{ options.name }}Service<ResponseType: APIResponseValue> {
 
     public let id: String
     public let tag: String
     public let method: String
-    public let path: String
+    public var path: String
     public let hasBody: Bool
     public let isUpload: Bool
     public let securityRequirements: [SecurityRequirement]
 
-    public init(id: String, tag: String = "", method:String, path:String, hasBody: Bool, isUpload: Bool = false, securityRequirements: [SecurityRequirement] = []) {
+    public init(id: String, tag: String = "", method: String, path: String, hasBody: Bool, isUpload: Bool = false, securityRequirements: [SecurityRequirement] = []) {
         self.id = id
         self.tag = tag
         self.method = method
@@ -21,7 +21,7 @@ public struct APIService<ResponseType: APIResponseValue> {
     }
 }
 
-extension APIService: CustomStringConvertible {
+extension {{ options.name }}Service: CustomStringConvertible {
 
     public var name: String {
         return "\(tag.isEmpty ? "" : "\(tag).")\(id)"
@@ -29,16 +29,6 @@ extension APIService: CustomStringConvertible {
 
     public var description: String {
         return "\(name): \(method) \(path)"
-    }
-}
-
-public struct SecurityRequirement {
-    public let type: String
-    public let scopes: [String]
-
-    public init(type: String, scopes: [String]) {
-        self.type = type
-        self.scopes = scopes
     }
 }
 

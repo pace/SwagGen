@@ -74,7 +74,7 @@ public class KotlinFormatter: CodeFormatter {
                 return "Double"
             }
             switch format {
-            case .double: return "Double"
+            case .double, .decimal: return "Double"
             case .float: return "Float"
             }
         case .integer(_):

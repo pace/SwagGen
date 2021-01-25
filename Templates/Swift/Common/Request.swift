@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 import Foundation
 
@@ -24,18 +24,18 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
     {% endif %}
     public enum {{ type }} {
 
-        public static let service = APIService<Response>(id: "{{ operationId }}", tag: "{{ tag }}", method: "{{ method|uppercase }}", path: "{{ path }}", hasBody: {% if hasBody %}true{% else %}false{% endif %}{% if isUpload %}, isUpload: true{% endif %}, securityRequirements: [{% for securityRequirement in securityRequirements %}SecurityRequirement(type: "{{ securityRequirement.name }}", scopes: [{% for scope in securityRequirement.scopes %}"{{ scope }}"{% ifnot forloop.last %}, {% endif %}{% endfor %}]){% ifnot forloop.last %}, {% endif %}{% endfor %}])
+        public static var service = {{ options.name }}Service<Response>(id: "{{ operationId }}", tag: "{{ tag }}", method: "{{ method|uppercase }}", path: "{{ path }}", hasBody: {% if hasBody %}true{% else %}false{% endif %}{% if isUpload %}, isUpload: true{% endif %}, securityRequirements: [{% for securityRequirement in securityRequirements %}SecurityRequirement(type: "{{ securityRequirement.name }}", scopes: [{% for scope in securityRequirement.scopes %}"{{ scope }}"{% ifnot forloop.last %}, {% endif %}{% endfor %}]){% ifnot forloop.last %}, {% endif %}{% endfor %}])
         {% for enum in requestEnums %}
         {% if not enum.isGlobal %}
 
-        {% filter indent:8 %}{% include "Includes/Enum.stencil" enum %}{% endfilter %}
+        {% filter indent:8 %}{% include "Common/Includes/Enum.stencil" enum %}{% endfilter %}
         {% endif %}
         {% endfor %}
 
-        public final class Request: APIRequest<Response> {
+        public final class Request: {{ options.name }}Request<Response> {
             {% for schema in requestSchemas %}
 
-            {% filter indent:12 %}{% include "Includes/Model.stencil" schema %}{% endfilter %}
+            {% filter indent:12 %}{% include "Common/Includes/Model.stencil" schema %}{% endfilter %}
             {% endfor %}
             {% if nonBodyParams %}
 
@@ -142,12 +142,12 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
         public enum Response: APIResponseValue, CustomStringConvertible, CustomDebugStringConvertible {
             {% for schema in responseSchemas %}
 
-            {% filter indent:12 %}{% include "Includes/Model.stencil" schema %}{% endfilter %}
+            {% filter indent:12 %}{% include "Common/Includes/Model.stencil" schema %}{% endfilter %}
             {% endfor %}
             {% for enum in responseEnums %}
             {% if not enum.isGlobal %}
 
-            {% filter indent:12 %}{% include "Includes/Enum.stencil" enum %}{% endfilter %}
+            {% filter indent:12 %}{% include "Common/Includes/Enum.stencil" enum %}{% endfilter %}
             {% endif %}
             {% endfor %}
             public typealias SuccessType = {{ successType|default:"Void"}}

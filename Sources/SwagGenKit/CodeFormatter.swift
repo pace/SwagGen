@@ -227,8 +227,21 @@ public class CodeFormatter {
     func getPathContext(_ path: Path) -> Context {
         var context: Context = [:]
 
-        context["path"] = path.path
-        context["parameters"] = path.parameters.map { $0.value }.map(getParameterContext)
+        let pathComponents = path.path.components(separatedBy: "?")
+        let pathString = pathComponents[0]
+        var queryNames: [String] = []
+        if pathComponents.count > 1 {
+            let params = pathComponents[1].components(separatedBy: "&")
+            for param in params {
+                if let paramName = param.components(separatedBy: "=").first {
+                    queryNames.append(paramName)
+                }
+            }
+        }
+
+        context["path"] = pathString
+        let parameters = path.parameters.map { $0.value }.map(getParameterContext)
+        context["parameters"] = parameters
         context["operations"] = path.operations.map(getOperationContext)
 
         return context
@@ -236,6 +249,18 @@ public class CodeFormatter {
 
     func getOperationContext(_ operation: Swagger.Operation) -> Context {
         var context: Context = [:]
+
+        let pathComponents = operation.path.components(separatedBy: "?")
+        let pathString = pathComponents[0]
+        var queryNames: [String] = []
+        if pathComponents.count > 1 {
+            let params = pathComponents[1].components(separatedBy: "&")
+            for param in params {
+                if let paramName = param.components(separatedBy: "=").first {
+                    queryNames.append(paramName)
+                }
+            }
+        }
 
         if let operationId = operation.identifier {
             context["operationId"] = operationId
@@ -251,7 +276,7 @@ public class CodeFormatter {
 
         context["raw"] = operation.json
         context["method"] = operation.method.rawValue.uppercased()
-        context["path"] = operation.path
+        context["path"] = pathString
         context["description"] = operation.description
         context["summary"] = operation.summary
         context["tag"] = operation.tags.first
@@ -308,8 +333,14 @@ public class CodeFormatter {
         context["requestSchemas"] = requestSchemas
         context["formProperties"] = formProperties
 
+        let nonBodyParams = params.map(getParameterContext) + formProperties
+
+        for queryName in queryNames {
+            guard nonBodyParams.contains(where: { $0["value"] as! String == queryName } ) else { fatalError("Query param \(queryName) not found in parameters for \(pathString).") }
+        }
+
         // TODO: seperate
-        context["nonBodyParams"] = params.map(getParameterContext) + formProperties // params and form properties
+        context["nonBodyParams"] = nonBodyParams
 
         let securityRequirements = operation.securityRequirements ?? spec.securityRequirements
         context["securityRequirement"] = securityRequirements?.first.flatMap(getSecurityRequirementContext)

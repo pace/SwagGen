@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 import Foundation
 
@@ -129,11 +129,7 @@ extension KeyedDecodingContainer {
         do {
             container = try nestedUnkeyedContainer(forKey: key)
         } catch {
-            if {{ options.name }}.safeArrayDecoding {
-                return array
-            } else {
-                throw error
-            }
+            return array
         }
 
         while !container.isAtEnd {
@@ -141,12 +137,7 @@ extension KeyedDecodingContainer {
                 let element = try container.decode(T.self)
                 array.append(element)
             } catch {
-                if {{ options.name }}.safeArrayDecoding {
-                    // hack to advance the current index
-                    _ = try? container.decode(AnyCodable.self)
-                } else {
-                    throw error
-                }
+                _ = try? container.decode(AnyCodable.self)
             }
         }
         return array
@@ -163,14 +154,10 @@ extension KeyedDecodingContainer {
     }
 
     fileprivate func decodeOptional<T>(_ closure: () throws -> T? ) throws -> T? {
-        if {{ options.name }}.safeOptionalDecoding {
-            do {
-                return try closure()
-            } catch {
-                return nil
-            }
-        } else {
+        do {
             return try closure()
+        } catch {
+            return nil
         }
     }
 }
@@ -318,7 +305,10 @@ extension DateDay {
 
 extension Date {
     func encode() -> Any {
-        return {{ options.name }}.dateEncodingFormatter.string(from: self)
+        var dateEncodingFormatter = DateFormatter(formatString: "yyyy-MM-dd'T'HH:mm:ssZZZZZ",
+                                                                locale: Locale(identifier: "en_US_POSIX"),
+                                                                calendar: Calendar(identifier: .gregorian))
+        return dateEncodingFormatter.string(from: self)
     }
 }
 
