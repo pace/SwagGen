@@ -4,6 +4,7 @@ options:
   fixedWidthIntegers: false # whether to use types like Int32 and Int64
   mutableModels: true # whether model properties are mutable
   modelPrefix: "PCPOI" # applied to model classes and enums
+  requestPrefix: "POIAPI" # applied to model classes and enums
   modelSuffix: null # applied to model classes
   modelType: class # can be struct or class
   modelInheritance: true # must be false for struct modelType
@@ -62,4 +63,4 @@ templateFiles:
     destination: "./../../Generated/Models/{{ type }}.swift"
   - path: Common/Request.swift
     context: operations
-    destination: "Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ type }}.swift"
+    destination: "Requests{% if tag %}/{{ tag|upperCamelCase }}{% endif %}/{{ fileName }}.swift"
