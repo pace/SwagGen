@@ -6,6 +6,7 @@ public struct Content {
 
     public enum MediaType: String {
         case json = "application/json"
+        case jsonApi = "application/vnd.api+json"
         case form = "application/x-www-form-urlencoded"
         case xml = "application/xml"
         case multipartForm = "multipart/form-data"
@@ -19,6 +20,10 @@ public struct Content {
 
     public var jsonSchema: Schema? {
         return getMediaItem(.json)?.schema
+    }
+
+    public var jsonApiSchema: Schema? {
+        return getMediaItem(.jsonApi)?.schema
     }
 
     public var formSchema: Schema? {
