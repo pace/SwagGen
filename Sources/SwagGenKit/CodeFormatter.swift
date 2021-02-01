@@ -318,6 +318,13 @@ public class CodeFormatter {
                 }
                 context["body"] = getRequestBodyContext(requestBody)
                 context["bodyProperties"] = schema.properties.map(getPropertyContext)
+            } else if let schema = requestBody.value.content.jsonApiSchema {
+                let name = requestBody.name ?? "Body"
+                if let schemaContext = getInlineSchemaContext(schema, name: name) {
+                    requestSchemas.append(schemaContext)
+                }
+                context["body"] = getRequestBodyContext(requestBody)
+                context["bodyProperties"] = schema.properties.map(getPropertyContext)
             }
             if let formSchema = requestBody.value.content.formSchema ?? requestBody.value.content.multipartFormSchema {
                 formProperties = formSchema.properties.map(getPropertyContext)
