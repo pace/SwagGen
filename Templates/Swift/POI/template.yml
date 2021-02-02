@@ -39,6 +39,8 @@ templateFiles:
     destination: "AnyPOIRequest.swift"
   - path: Common/APIClient.swift
     destination: "POIAPIClient.swift"
+  - path: Common/APIClient+URLProtocol.swift
+    destination: "POIAPIClient+URLProtocol.swift"
   - path: Common/APIService.swift
     destination: "POIAPIService.swift"
   - path: Common/APIClientError.swift
