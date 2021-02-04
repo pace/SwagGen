@@ -39,6 +39,8 @@ templateFiles:
     destination: "AnyFuelingRequest.swift"
   - path: Common/APIClient.swift
     destination: "FuelingAPIClient.swift"
+  - path: Common/APIClient+URLProtocol.swift
+    destination: "FuelingAPIClient+URLProtocol.swift"
   - path: Common/APIService.swift
     destination: "FuelingAPIService.swift"
   - path: Common/APIClientError.swift

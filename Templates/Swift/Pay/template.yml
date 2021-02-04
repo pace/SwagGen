@@ -39,6 +39,8 @@ templateFiles:
     destination: "AnyPayRequest.swift"
   - path: Common/APIClient.swift
     destination: "PayAPIClient.swift"
+  - path: Common/APIClient+URLProtocol.swift
+    destination: "PayAPIClient+URLProtocol.swift"
   - path: Common/APIService.swift
     destination: "PayAPIService.swift"
   - path: Common/APIClientError.swift
