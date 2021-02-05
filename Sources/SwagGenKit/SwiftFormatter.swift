@@ -269,6 +269,7 @@ public class SwiftFormatter: CodeFormatter {
         var context = super.getRequestBodyContext(requestBody)
         let type = context["type"] as! String
         context["optionalType"] = type + (requestBody.value.required ? "" : "?")
+        context["isAnyType"] = type.contains("Any")
         return context
     }
 
