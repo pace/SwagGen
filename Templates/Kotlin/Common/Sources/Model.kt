@@ -1,4 +1,4 @@
-{% include "Includes/Header.stencil" %}
+{% include "Common/Includes/Header.stencil" %}
 
 package {{ options.packageName }}.model
 
@@ -6,4 +6,4 @@ package {{ options.packageName }}.model
 import {{ dependency.path }}
 {% endfor %}
 
-{% include "Includes/Model.stencil" %}
+{% include "Common/Includes/Model.stencil" %}

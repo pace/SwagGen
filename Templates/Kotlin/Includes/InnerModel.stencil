@@ -1,6 +1,0 @@
-{% if description %}
-/** {{ description }} **/
-{% endif %}
-class {{ type }}{
-    {% include "Includes/ModelBody.stencil" schema %}
-}

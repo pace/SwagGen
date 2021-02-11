@@ -1,0 +1,10 @@
+{% if description %}
+/* {{ description }} */
+{% endif %}
+enum class {{ enumName }}(val value: String) {
+    {% for enumCase in enums %}
+    @SerializedName("{{ enumCase.value }}")
+    @Json(name = "{{ enumCase.value }}")
+    {{ enumCase.name|uppercase }}("{{ enumCase.value }}"){% ifnot forloop.last %},{% endif %}
+    {% endfor %}
+}
