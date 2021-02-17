@@ -70,8 +70,14 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                 self.options = options
                 {% endif %}
                 super.init(service: {{ type }}.service){% if body %} { defaultEncoder in
+                    {% if body.type != "File" %}
                     return try (encoder ?? defaultEncoder).encode({% if body.isAnyType %}AnyCodable({{ body.name }}){% else %}{{ body.name }}{% endif %})
-                }{% endif %}
+                    {% else %}
+                    return {{ body.name }}
+                    {% endif %}
+                }
+                self.contentType = "{{ contentType }}"
+                {% endif %}
             }
             {% if nonBodyParams %}
 

@@ -316,6 +316,7 @@ public class CodeFormatter {
                 if let schemaContext = getInlineSchemaContext(schema, name: name) {
                     requestSchemas.append(schemaContext)
                 }
+                context["contentType"] = Content.MediaType.json.rawValue
                 context["body"] = getRequestBodyContext(requestBody)
                 context["bodyProperties"] = schema.properties.map(getPropertyContext)
             } else if let schema = requestBody.value.content.jsonApiSchema {
@@ -323,11 +324,13 @@ public class CodeFormatter {
                 if let schemaContext = getInlineSchemaContext(schema, name: name) {
                     requestSchemas.append(schemaContext)
                 }
+                context["contentType"] = Content.MediaType.jsonApi.rawValue
                 context["body"] = getRequestBodyContext(requestBody)
                 context["bodyProperties"] = schema.properties.map(getPropertyContext)
             }
             if let formSchema = requestBody.value.content.formSchema ?? requestBody.value.content.multipartFormSchema {
                 formProperties = formSchema.properties.map(getPropertyContext)
+                context["contentType"] = requestBody.value.content.formSchema != nil ? Content.MediaType.form.rawValue : Content.MediaType.multipartForm.rawValue
                 context["isUpload"] = formSchema.properties.contains { $0.schema.isFile }
             }
             if let schema = requestBody.value.content.protobufSchema {
@@ -335,6 +338,7 @@ public class CodeFormatter {
                 if let schemaContext = getInlineSchemaContext(schema, name: name) {
                     requestSchemas.append(schemaContext)
                 }
+                context["contentType"] = Content.MediaType.protobuf.rawValue
                 context["body"] = getRequestBodyContext(requestBody)
                 context["bodyProperties"] = schema.properties.map(getPropertyContext)
             }
