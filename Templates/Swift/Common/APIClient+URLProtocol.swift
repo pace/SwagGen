@@ -4,9 +4,7 @@ import Foundation
 
 public extension {{ options.name }}Client {
     private static var urlConfiguration: URLSessionConfiguration {
-        let config: URLSessionConfiguration = .default
-        config.protocolClasses = [CustomURLProtocol.self]
-        return config
+        .default
     }
 
     static var custom = {{ options.name }}Client(baseURL: {{ options.name }}Client.default.baseURL, configuration: urlConfiguration)
