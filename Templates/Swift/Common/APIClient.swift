@@ -142,7 +142,12 @@ public class {{ options.name }}Client {
                 // Handle response
                 self?.decodingQueue.async {
                     guard let response = response as? HTTPURLResponse else {
-                        let apiError = APIClientError.networkError(URLRequestError.responseInvalid)
+                        var apiError: APIClientError
+                        if let error = error {
+                            apiError = APIClientError.networkError(error)
+                        } else {
+                            apiError = APIClientError.networkError(URLRequestError.responseInvalid)
+                        }
                         let result: APIResult<T> = .failure(apiError)
                         requestBehaviour.onFailure(error: apiError)
 
