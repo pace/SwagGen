@@ -42,6 +42,26 @@ public class KotlinFormatter: CodeFormatter {
     override var disallowedNames: [String] { return disallowedKeywords }
     override var disallowedTypes: [String] { return disallowedKeywords }
     
+    override func getSpecContext() -> Context {
+        var context = super.getSpecContext()
+        
+        let requestProperties: [[Context]] = spec.operations.compactMap{
+            guard let requestBody = $0.requestBody else { return nil }
+            guard let defaultSchema = requestBody.value.content.defaultSchema else { return nil }
+            return defaultSchema.properties.map { getPropertyContext($0) }
+        }
+        let properties = requestProperties.flatMap { $0 }
+        
+        let schemas = context["schemas"] as? [Context]
+        let bodyPropertySchemas = schemas?.filter { schema in
+            return properties.contains(where: { schema["type"] as? String == $0["type"] as? String })
+        }
+        
+        context["bodySchemas"] = bodyPropertySchemas
+        
+        return context
+    }
+    
     override func getSchemaType(name: String, schema: Schema, checkEnum: Bool = true) -> String {
         var enumValue: String?
         if checkEnum {
@@ -134,6 +154,7 @@ public class KotlinFormatter: CodeFormatter {
         }
         
         let properties = context["properties"] as? [Context]
+        context["allProperties"] = properties
         let names = properties?.compactMap { $0["name"] as? String } ?? []
         context["isResource"] = ["id", "type"].allSatisfy(names.contains)
         context["attributes"] = properties?.filter({($0["name"] as! String) == "attributes"})

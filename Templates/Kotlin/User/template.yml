@@ -47,6 +47,7 @@ options:
     - path: okhttp3.OkHttpClient
     - path: retrofit2.Call
     - path: retrofit2.Retrofit
+    - path: retrofit2.converter.moshi.MoshiConverterFactory
     - path: retrofit2.http.*
     - path: java.io.File
     - path: java.util.*
@@ -56,6 +57,9 @@ templateFiles:
   - path: Common/Sources/Model.kt
     context: schemas
     destination: "user/generated/model/{{ type }}.kt"
+  - path: Common/Sources/BodyModel.kt
+    context: bodySchemas
+    destination: "user/generated/model/{{ type }}Body.kt"
   - path: Common/Sources/ModelAPI.kt
     context: operations
     destination: "user/generated/request{% if tag %}/{{ tag|lowerCamelCase }}{% endif %}/{{ type }}API.kt"
