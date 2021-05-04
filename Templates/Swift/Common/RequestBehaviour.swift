@@ -107,7 +107,8 @@ struct {{ options.name }}RequestBehaviourGroup {
         }
 
         newRequest.url = QueryParamHandler.buildUrl(for: oldUrl)
-
+        newRequest.setValue(Constants.Tracing.identifier, forHTTPHeaderField: Constants.Tracing.key)
+        
         return newRequest
     }
 }
