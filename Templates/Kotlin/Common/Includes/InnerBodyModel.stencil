@@ -1,0 +1,31 @@
+{% if raw.enum != null %}
+{% include "Common/Includes/Enum.stencil" enum %}
+{% elif aliasType %}
+{% if description %}
+/* {{ description }} */
+{% endif %}
+typealias {{ type }} = {{ aliasType }}
+{% else %}
+{% if description %}
+/* {{ description }} */
+{% endif %}
+class {{ type }} {
+{% for property in allProperties %}
+    {% if forloop.first %}
+    
+    {% endif %}
+    {% if property.description %}
+    /* {{ property.description }} */
+    {% endif %}
+    {% if property.required and not property.isPrimitiveType %}lateinit {% endif %}var {{ property.name }}: {{ property.type }}{% if not property.required or property.isPrimitiveType %}? = null{% endif %}
+{% endfor %}
+{% for enum in enums where not enum.isGlobal %}
+    
+    {% filter indent:4 %}{% include "Common/Includes/Enum.stencil" enum %}{% endfilter %}
+{% endfor %}
+{% for schema in schemas %}
+
+    {% filter indent:4 %}{% include "Common/Includes/InnerBodyModel.stencil" schema %}{% endfilter %}
+{% endfor %}
+}
+{% endif %}
