@@ -246,7 +246,11 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                 {% if response.type == "File" %}
                 case {{ response.statusCode }}: self = try .{{ response.name }}(data)
                 {% else %}
-                case {{ response.statusCode }}: self = try .{{ response.name }}(decoder.decode{% if response.isAnyType %}Any{% endif %}({{ response.type }}.self, from: data))
+                {% if response.isAnyType %}
+                case {{ response.statusCode }}: self = try .{{ response.name }}(decoder.decodeAnyJson(from: data))
+                {% else %}
+                case {{ response.statusCode }}: self = try .{{ response.name }}(decoder.decode({{ response.type }}.self, from: data))
+                {% endif %}
                 {% endif %}
                 {% else %}
                 case {{ response.statusCode }}: self = .{{ response.name }}
@@ -254,7 +258,11 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                 {% endfor %}
                 {% if defaultResponse %}
                 {% if defaultResponse.type %}
-                default: self = try .{{ defaultResponse.name }}(statusCode: statusCode, decoder.decode{% if response.isAnyType %}Any{% endif %}({{ defaultResponse.type }}.self, from: data))
+                {% if response.isAnyType %}
+                default: self = try .{{ response.name }}(decoder.decodeAnyJson(from: data))
+                {% else %}
+                default: self = try .{{ defaultResponse.name }}(statusCode: statusCode, decoder.decode({{ defaultResponse.type }}.self, from: data))
+                {% endif %}
                 {% else %}
                 default: self = .{{ defaultResponse.name }}(statusCode: statusCode)
                 {% endif %}
