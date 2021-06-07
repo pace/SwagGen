@@ -104,6 +104,8 @@ extension {{ options.name }}Request {
             urlRequest.httpBody = formParams.query?.data(using: .utf8)
         }
 
+        urlRequest.setValue(contentType, forHTTPHeaderField: "Accept")
+
         if let encodeBody = encodeBody {
             urlRequest.httpBody = try encodeBody(encoder)
             urlRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")

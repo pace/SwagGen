@@ -204,6 +204,14 @@ public class SwiftFormatter: CodeFormatter {
             let generatedOperationId = operation.method.rawValue.lowercased() + pathName.upperCamelCased()
             context["fileName"] = escapeType("\(requestPrefix)\(generatedOperationId.upperCamelCased())")
         }
+        if let requirements = context["securityRequirements"] as? [[String: Any?]],
+           requirements.contains(where: {
+            guard let value = $0["name"] as? String else { return false }
+            return value == "OAuth2" || value == "OIDC"
+           }) {
+            context["authorizationRequired"] = true
+        }
+
         return context
     }
 
