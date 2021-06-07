@@ -73,6 +73,13 @@ extension ResponseDecoder {
         }
         return decoded
     }
+
+    func decodeAnyJson(from data: Data) throws -> [String: AnyCodable] {
+        guard let decoded = try? decode([String: AnyCodable].self, from: data) else {
+            throw DecodingError.typeMismatch([String: AnyCodable].self, DecodingError.Context(codingPath: [StringCodingKey(string: "")], debugDescription: "Decoding of \([String: AnyCodable].self) failed"))
+        }
+        return decoded
+    }
 }
 
 // any decoding
