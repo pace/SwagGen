@@ -153,7 +153,7 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
 
             override var headerParameters: [String: String] {
                 var headers: [String: String] = [:]
-                if let token = API.oAuthToken {
+                if let token = API.accessToken {
                     headers["Authorization"] = "Bearer \(token)"
                 }
                 return headers
