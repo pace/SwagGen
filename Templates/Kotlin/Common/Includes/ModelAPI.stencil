@@ -9,10 +9,10 @@ object {{ type }}API {
         {% endif %}
         @{{ method|uppercase }}("{% for part in path | split:"/" %}{{ part }}{% ifnot forloop.first %}{% ifnot forloop.last %}/{% endif %}{% endif %}{% endfor %}")
         fun {{ type|lowerCamelCase }}(
-            {% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" %}{% if not forloop.first%},{% endif %}{% endif %}
+            {% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header"%}{% if not forloop.first%},{% endif %}{% endif %}
             {% if param.description %}
             /* {{ param.description }} */
-            {% endif %}{% if param.raw.in == "path" %}@Path("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "query" %}@Query("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}
+            {% endif %}{% if param.raw.in == "path" %}@Path("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "query" %}@Query("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "header" %}@Header("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}
             {% if body.description %}
             /* {{ body.description }} */
             {% endif %}
@@ -32,7 +32,7 @@ object {{ type }}API {
     private val service: {{ type|upperCamelCase }}Service by lazy {
         Retrofit.Builder()
             .client(OkHttpClient.Builder()
-                .addNetworkInterceptor(InterceptorUtils.getInterceptor("application/vnd.api+json", "application/vnd.api+json"))
+                .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
                 .authenticator(InterceptorUtils.getAuthenticator())
                 .build()
             )
@@ -70,6 +70,6 @@ object {{ type }}API {
             .create({{ type|upperCamelCase }}Service::class.java)
     }
 
-    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" %}{% ifnot forloop.first %}, {% endif %}{{ param.name }}: {{ param.optionalType }}{% else %}{% endif %}{% if forloop.last and body %}, {% endif%}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}{% endif %}) =
-        service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" %}{% ifnot forloop.first %}, {% endif %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)?.let { it +'Z'} {% else %}{{ param.name }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}{{ body.name}}{% endif %})
+    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{% ifnot forloop.first %}, {% endif %}{{ param.name }}: {{ param.optionalType }}{% else %}{% endif %}{% if forloop.last and body %}, {% endif%}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}{% endif %}) =
+        service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{% ifnot forloop.first %}, {% endif %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)?.let { it +'Z'} {% else %}{{ param.name }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}{{ body.name}}{% endif %})
 }
