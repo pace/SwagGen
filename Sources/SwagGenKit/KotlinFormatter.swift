@@ -179,7 +179,7 @@ public class KotlinFormatter: CodeFormatter {
         
         let type = context["type"] as! String
         context["optionalType"] = type + (requestBody.value.required ? "" : "? = null")
-        
+    
         return context
     }
 
@@ -199,6 +199,19 @@ public class KotlinFormatter: CodeFormatter {
         let type = context["type"] as? String ?? ""
         context["isAnyType"] = type.contains("Any")
         
+        return context
+    }
+
+    override func getOperationContext(_ operation: Swagger.Operation) -> Context {
+        var context = super.getOperationContext(operation)
+        if let requirements = context["securityRequirements"] as? [[String: Any?]],
+           requirements.contains(where: {
+            guard let value = $0["name"] as? String else { return false }
+            return value == "OAuth2" || value == "OIDC"
+           }) {
+            context["authorizationRequired"] = true
+        }
+
         return context
     }
     
