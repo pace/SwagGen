@@ -67,13 +67,6 @@ struct StringCodingKey: CodingKey, ExpressibleByStringLiteral {
 // any json decoding
 extension ResponseDecoder {
 
-    func decodeAny<T>(_ type: T.Type, from data: Data) throws -> T {
-        guard let decoded = try decode(AnyCodable.self, from: data) as? T else {
-            throw DecodingError.typeMismatch(T.self, DecodingError.Context(codingPath: [StringCodingKey(string: "")], debugDescription: "Decoding of \(T.self) failed"))
-        }
-        return decoded
-    }
-
     func decodeAnyJson(from data: Data) throws -> [String: AnyCodable] {
         guard let decoded = try? decode([String: AnyCodable].self, from: data) else {
             throw DecodingError.typeMismatch([String: AnyCodable].self, DecodingError.Context(codingPath: [StringCodingKey(string: "")], debugDescription: "Decoding of \([String: AnyCodable].self) failed"))
@@ -314,6 +307,7 @@ extension Date {
     func encode() -> Any {
         var dateEncodingFormatter = DateFormatter(formatString: "yyyy-MM-dd'T'HH:mm:ss'Z'",
                                                                 locale: Locale(identifier: "de_DE"),
+                                                                timeZone: TimeZone(abbreviation: "UTC"),
                                                                 calendar: Calendar(identifier: .gregorian))
         return dateEncodingFormatter.string(from: self)
     }
