@@ -51,6 +51,7 @@ options:
     - path: retrofit2.http.*
     - path: java.io.File
     - path: java.util.*
+    - path: java.util.concurrent.TimeUnit
 templateFiles:
   - path: Common/Sources/ServiceAPI.kt
     destination: "fueling/FuelingAPI.kt"
