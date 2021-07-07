@@ -30,27 +30,27 @@ object {{ type }}API {
     {% endfor %}
 
     fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{{ param.name }}: {{ param.optionalType }}, {% else %}{% endif %}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}, {% endif %}readTimeout: Long? = null): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}Void{% endif %}> {
+        val client = OkHttpClient.Builder()
+                        .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
+                        .authenticator(InterceptorUtils.getAuthenticator())
+
+        if (readTimeout != null) {
+            client.readTimeout(readTimeout, TimeUnit.SECONDS)
+        }
+
         val service: {{ type|upperCamelCase }}Service =
             Retrofit.Builder()
-                .client(OkHttpClient.Builder()
-                    .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
-                    .authenticator(InterceptorUtils.getAuthenticator())
-                    .readTimeout(readTimeout ?: 10L, TimeUnit.SECONDS)
-                    .build()
-                )
+                .client(client.build())
                 .baseUrl({{ options.modelProtocol }}.baseUrl)
                 .addConverterFactory(EnumConverterFactory())
                 .addConverterFactory(
                     JsonApiConverterFactory.create(
                         Moshi.Builder()
                             .add(ResourceAdapterFactory.builder()
-                                {% for item in responses where item.statusCode == 200 %}	
-                                {% for innerItem in item.schema.raw.properties.included.items.oneOf %}	
-                                {% for ref in innerItem.$ref|split:"/" %}
+                                {% for ref in successResponse.schema.raw.properties.included.items.oneOf %}
+                                {% for class in ref.$ref|split:"/" %}
                                 {% if forloop.last %}
-                                .add({{ ref }}::class.java)
-                                {% endif %}
-                                {% endfor %}
+                                .add({{class}}::class.java){% endif %}
                                 {% endfor %}
                                 {% endfor %}
                                 .build()
