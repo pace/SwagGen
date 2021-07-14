@@ -372,6 +372,7 @@ public class CodeFormatter {
         context["defaultResponse"] = responses.first { $0.statusCode == nil }.flatMap(getResponseContext)
         context["onlySuccessResponses"] = successResponse != nil && responses.count == 1
         context["alwaysHasResponseType"] = responses.filter { $0.response.value.schema != nil }.count == responses.count
+        context["successContent"] = successResponse.flatMap(getResponseContext)?["content"]
 
         let successTypes = successResponses.compactMap { $0["type"] as? String }
         let failureTypes = failureResponses.compactMap { $0["type"] as? String }
@@ -420,6 +421,8 @@ public class CodeFormatter {
         context["schema"] = response.response.value.schema.flatMap(getSchemaContext)
         context["description"] = response.response.value.description.description
         context["type"] = response.response.value.schema.flatMap { getSchemaType(name: response.name, schema: $0) }
+        context["acceptHeaders"] = response.response.value.content?.mediaItems.keys.map{$0}
+        context["acceptHeaderEnums"] = response.response.value.content?.mediaItems.keys.map{$0.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ".", with: "_").replacingOccurrences(of: "+", with: "_").uppercased()}
 
         return context
     }

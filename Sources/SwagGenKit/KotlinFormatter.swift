@@ -198,7 +198,7 @@ public class KotlinFormatter: CodeFormatter {
         
         let type = context["type"] as? String ?? ""
         context["isAnyType"] = type.contains("Any")
-        
+
         return context
     }
 
