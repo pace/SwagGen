@@ -420,6 +420,8 @@ public class CodeFormatter {
         context["schema"] = response.response.value.schema.flatMap(getSchemaContext)
         context["description"] = response.response.value.description.description
         context["type"] = response.response.value.schema.flatMap { getSchemaType(name: response.name, schema: $0) }
+        context["acceptHeaders"] = response.response.value.content?.mediaItems.keys.map{$0}
+        context["acceptHeaderEnums"] = response.response.value.content?.mediaItems.keys.map{$0.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ".", with: "_").replacingOccurrences(of: "+", with: "_").uppercased()}
 
         return context
     }
