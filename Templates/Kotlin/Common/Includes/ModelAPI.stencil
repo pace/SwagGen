@@ -12,7 +12,9 @@ object {{ type }}API {
             {% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header"%}{% if not forloop.first%},{% endif %}{% endif %}
             {% if param.description %}
             /* {{ param.description }} */
-            {% endif %}{% if param.raw.in == "path" %}@Path("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "query" %}@Query("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "header" %}@Header("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}
+            {% endif %}{% if param.raw.in == "path" %}@Path("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "query" %}@Query("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% elif param.raw.in == "header" %}@Header("{{ param.value }}") {{ param.name }}: {% if param.optionalType == "Date? = null" %}String? = null{% else %}{{ param.optionalType }}{% endif %}{% endif %}{% if forloop.last and body or forloop.last and successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}, {% endif %}{% endfor %}
+            {% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1%}@Header("Accept") accept: String? = null{%if body%}, {% endif %}{% endif %}
+            {% if body %}
             {% if body.description %}
             /* {{ body.description }} */
             {% endif %}
@@ -29,9 +31,17 @@ object {{ type }}API {
         {% filter indent:4 %}{% include "Common/Includes/ModelAPIBodyModel.stencil" schema %}{% endfilter %}
     {% endfor %}
 
-    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{{ param.name }}: {{ param.optionalType }}, {% else %}{% endif %}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}, {% endif %}readTimeout: Long? = null): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}Void{% endif %}> {
+    {% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 and successResponse.acceptHeaderEnums.count == successResponse.acceptHeaders.count%}
+    enum class {{type}}AcceptHeader(val value: String) {
+        {% for enum in successResponse.acceptHeaders %}
+        {{successResponse.acceptHeaderEnums[forloop.counter0]}}("{{successResponse.acceptHeaders[forloop.counter0]}}"){% ifnot forloop.last %},{% endif %}
+            {% endfor %}
+    }
+
+    {% endif %}
+    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{{ param.name }}: {{ param.optionalType }}, {% else %}{% endif %}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}, {% endif %}readTimeout: Long? = null{% if successResponse.schema.raw.type  == "object" and successResponse.acceptHeaderEnums.count > 1 %}, accept: {{type}}AcceptHeader? = null{% endif %}): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}Void{% endif %}> {
         val client = OkHttpClient.Builder()
-                        .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
+                        .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}null{% elif successResponse.schema.raw.type == "object"%}"application/vnd.api+json"{% elif contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
                         .authenticator(InterceptorUtils.getAuthenticator())
 
         if (readTimeout != null) {
@@ -69,8 +79,8 @@ object {{ type }}API {
                     )
                 )
                 .build()
-                .create({{ type|upperCamelCase }}Service::class.java)    
+                .create({{ type|upperCamelCase }}Service::class.java)
     
-        return service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{% ifnot forloop.first %}, {% endif %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)?.let { it +'Z'} {% else %}{{ param.name }}{% endif %}{% endif %}{% if forloop.last and body %}, {% endif %}{% endfor %}{% if body %}{{ body.name}}{% endif %})
+        return service.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{% ifnot forloop.first %}, {% endif %}{% if param.optionalType == "Date? = null" %}{{ param.name }}?.toIso8601()?.dropLast(9)?.let { it +'Z'} {% else %}{{ param.name }}{% endif %}{% endif %}{% if forloop.last and body or forloop.last and successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}, {% endif %}{% endfor %}{% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}accept?.value{% if body %}, {% endif %}{% endif %}{% if body %}{{ body.name}}{% endif %})
     }
 }
