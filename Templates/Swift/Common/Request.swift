@@ -61,8 +61,16 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
 
             public var {{ body.name}}: {{body.optionalType}}
             {% endif %}
+            {% if successResponse.acceptHeaders.count > 1 %}
 
-            public init({% if body %}{{ body.name}}: {{ body.optionalType }}{% if nonBodyParams %}, {% endif %}{% endif %}{% if nonBodyParams %}options: Options{% endif %}{% if body %}, encoder: RequestEncoder? = nil{% endif %}) {
+            public enum {{type}}AcceptHeader: String {
+                {% for enumCase in successResponse.acceptHeadersEnumCases %}
+                case {{successResponse.acceptHeadersEnumCases[forloop.counter0]}} = "{{successResponse.acceptHeaders[forloop.counter0]}}"
+                {% endfor %}
+            }
+            {% endif %}
+
+            public init({% if body %}{{ body.name}}: {{ body.optionalType }}{% if nonBodyParams %}, {% endif %}{% endif %}{% if nonBodyParams %}options: Options{% endif %}{% if body %}, encoder: RequestEncoder? = nil{% endif %}{% if successResponse.acceptHeaders.count > 1 %}, responseContentType: {{type}}AcceptHeader{% endif %}) {
                 {% if body %}
                 self.{{ body.name}} = {{ body.name}}
                 {% endif %}
@@ -76,17 +84,27 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                     return {{ body.name }}
                     {% endif %}
                 }
+                {% endif %}
+                {% if body %}
+                {% if successResponse.acceptHeaders.count > 1 %}
+                self.contentType = responseContentType.rawValue
+                {% else %}
                 self.contentType = "{{ contentType }}"
+                {% endif %}
+                {% else %}
+                {% if successResponse.acceptHeaders.count > 1 %}
+                self.contentType = responseContentType.rawValue
+                {% endif %}
                 {% endif %}
             }
             {% if nonBodyParams %}
 
             /// convenience initialiser so an Option doesn't have to be created
-            public convenience init({% for param in nonBodyParams %}{{ param.name }}: {{ param.optionalType }}{% ifnot param.required %} = nil{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %}{% if nonBodyParams and body %}, {% endif %}{% if body %}{{ body.name}}: {{ body.optionalType}}{% ifnot body.required %} = nil{% endif %}{% endif %}) {
+            public convenience init({% for param in nonBodyParams %}{{ param.name }}: {{ param.optionalType }}{% ifnot param.required %} = nil{% endif %}{% ifnot forloop.last %}, {% endif %}{% endfor %}{% if nonBodyParams and body %}, {% endif %}{% if body %}{{ body.name}}: {{ body.optionalType}}{% ifnot body.required %} = nil{% endif %}{% endif %}{% if successResponse.acceptHeaders.count > 1 %}, responseContentType: {{type}}AcceptHeader{% endif %}) {
                 {% if nonBodyParams %}
                 let options = Options({% for param in nonBodyParams %}{{param.name}}: {{param.name}}{% ifnot forloop.last %}, {% endif %}{% endfor %})
                 {% endif %}
-                self.init({% if body %}{{ body.name}}: {{ body.name}}{% if nonBodyParams %}, {% endif %}{% endif %}{% if nonBodyParams %}options: options{% endif %})
+                self.init({% if body %}{{ body.name}}: {{ body.name}}{% if nonBodyParams %}, {% endif %}{% endif %}{% if nonBodyParams %}options: options{% endif %}{% if successResponse.acceptHeaders.count > 1 %}, responseContentType: responseContentType{% endif %})
             }
             {% endif %}
             {% if pathParams %}

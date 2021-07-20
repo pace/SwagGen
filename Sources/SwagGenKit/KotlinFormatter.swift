@@ -198,6 +198,8 @@ public class KotlinFormatter: CodeFormatter {
         
         let type = context["type"] as? String ?? ""
         context["isAnyType"] = type.contains("Any")
+        context["acceptHeaders"] = response.response.value.content?.mediaItems.keys.map{$0}
+        context["acceptHeaderEnums"] = response.response.value.content?.mediaItems.keys.map{$0.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ".", with: "_").replacingOccurrences(of: "+", with: "_").uppercased()}
         
         return context
     }

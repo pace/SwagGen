@@ -321,6 +321,11 @@ public class SwiftFormatter: CodeFormatter {
         var context = super.getResponseContext(response)
         let type = context["type"] as? String ?? ""
         context["isAnyType"] = type.contains("Any")
+
+        let mediaTypes = response.response.value.content?.mediaItems.keys
+        context["acceptHeaders"] = mediaTypes?.compactMap { $0 }
+        context["acceptHeadersEnumCases"] = mediaTypes?.compactMap { $0.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ".", with: "_").replacingOccurrences(of: "+", with: "_").replacingOccurrences(of: "-", with: "_") }
+
         return context
     }
 
