@@ -85,7 +85,26 @@ public {{ options.modelType }} {{ type }}: {% if parent %}{{ parent.type }}{% el
         let container = try decoder.container(keyedBy: StringCodingKey.self)
 
         {% for property in properties %}
+        {% if property.isPoly %}
+        guard let {{ property.name }} = try container.toDictionary()["{{ property.name }}"] as? [[String: Any]] else { return }
+        let decoder = JSONDecoder()
+
+        {% for polyType in property.polyTypes %}
+        let {{ property.name }}{{ polyType }}s = {{ property.name }}.filter { $0["type"] as? String == {{ polyType }}.{{ options.modelPrefix }}Type.allCases.first?.rawValue }
+        {% endfor %}
+
+        {% for polyType in property.polyTypes %}
+        let decoded{{ polyType }}s: [{{ polyType }}] = try decoder.decodeJSONObject({{ property.name }}{{ polyType }}s)
+        {% endfor %}
+
+        self.{{ property.name }} =
+            {% for polyType in property.polyTypes %}{% if forloop.first %}decoded{{ polyType }}s.map({{ property.polyTypeString }}.init){% else %}
+            + decoded{{ polyType }}s.map({{ property.polyTypeString }}.init)
+            {% endif %}{% endfor %}
+
+        {% else %}
         {{ property.name }} = try container.decode{% if property.isArray and not property.isAnyType %}Array{% endif %}{% if property.isAnyType %}Any{% endif %}{% if property.optional %}IfPresent{% endif %}("{{ property.value }}")
+        {% endif %}
         {% endfor %}
         {% endif %}
         {% if additionalPropertiesType %}
