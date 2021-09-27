@@ -314,6 +314,17 @@ public class SwiftFormatter: CodeFormatter {
 
         context["encodedValue"] = encodedValue
         context["isAnyType"] = type.contains("Any")
+
+        if case .array(let arraySchema) = property.schema.type,
+           case .single(let singleArraySchema) = arraySchema.items,
+           case .group(let groupSchema) = singleArraySchema.type,
+           groupSchema.schemas.count > 1 {
+            let schemas: [String] = groupSchema.schemas.map { getSchemaType(name: name, schema: $0) }
+            context["isPoly"] = true
+            context["polyTypes"] = schemas
+            context["polyTypeString"] = "Poly\(schemas.count)<\(schemas.joined(separator: ","))>"
+        }
+
         return context
     }
 
