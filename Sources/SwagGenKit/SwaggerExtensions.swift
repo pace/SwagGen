@@ -156,6 +156,8 @@ extension Schema {
         case let .group(group):
             if group.discriminator != nil {
                 return self
+            } else if case .all = group.type, group.schemas.count > 1 {
+                return self
             }
         default: break
         }
