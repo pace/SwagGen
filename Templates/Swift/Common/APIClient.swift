@@ -8,7 +8,7 @@ public class {{ options.name }}Client {
     public static var `default` = {{ options.name }}Client(baseURL: {% if options.baseURL %}"{{ options.baseURL }}"{% elif defaultServer %}{{ options.name }}.PayServer.{{ defaultServer.name }}{% else %}""{% endif %})
 
     /// A list of RequestBehaviours that can be used to monitor and alter all requests
-    public var behaviours: [{{ options.name }}RequestBehaviour] = []
+    public var behaviours: [{{ options.name }}RequestBehaviour] = [{{ options.name }}RequestBehaviourImplementation()]
 
     /// The base url prepended before every request path
     public var baseURL: String
@@ -28,7 +28,7 @@ public class {{ options.name }}Client {
 
     public init(baseURL: String, configuration: URLSessionConfiguration = .default, defaultHeaders: [String: String] = [:], behaviours: [{{ options.name }}RequestBehaviour] = []) {
         self.baseURL = baseURL
-        self.behaviours = behaviours
+        self.behaviours = self.behaviours + behaviours
         self.defaultHeaders = defaultHeaders
         jsonDecoder.dateDecodingStrategy = .custom(dateDecoder)
         jsonEncoder.dateEncodingStrategy = .formatted({{ options.name }}.dateEncodingFormatter)
@@ -54,7 +54,7 @@ public class {{ options.name }}Client {
             urlRequest = try request.createURLRequest(baseURL: baseURL, encoder: jsonEncoder)
         } catch {
             let error = APIClientError.requestEncodingError(error)
-            requestBehaviour.onFailure(error: error)
+            requestBehaviour.onFailure(response: HTTPURLResponse(), error: error)
             let response = {{ options.name }}Response<T>(request: request, result: .failure(error))
             complete(response)
             return nil
@@ -79,7 +79,7 @@ public class {{ options.name }}Client {
             case .failure(let error):
                 let error = APIClientError.validationError(error)
                 let response = {{ options.name }}Response<T>(request: request, result: .failure(error), urlRequest: urlRequest)
-                requestBehaviour.onFailure(error: error)
+                requestBehaviour.onFailure(response: HTTPURLResponse(), error: error)
                 complete(response)
             }
         }
@@ -151,7 +151,7 @@ public class {{ options.name }}Client {
                             apiError = APIClientError.networkError(URLRequestError.responseInvalid)
                         }
                         let result: APIResult<T> = .failure(apiError)
-                        requestBehaviour.onFailure(error: apiError)
+                        requestBehaviour.onFailure(response: HTTPURLResponse(), error: apiError)
 
                         let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest)
                         requestBehaviour.onResponse(response: response.asAny())
@@ -197,7 +197,7 @@ public class {{ options.name }}Client {
         if let error = error {
             let apiError = APIClientError.networkError(error)
             result = .failure(apiError)
-            requestBehaviour.onFailure(error: apiError)
+            requestBehaviour.onFailure(response: response, error: apiError)
             let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
             requestBehaviour.onResponse(response: response.asAny())
 
@@ -247,7 +247,7 @@ public class {{ options.name }}Client {
         guard let data = data else {
             let error = APIClientError.invalidDataError
             result = .failure(error)
-            requestBehaviour.onFailure(error: error)
+            requestBehaviour.onFailure(response: response, error: error)
             let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: nil)
             requestBehaviour.onResponse(response: response.asAny())
 
@@ -263,6 +263,8 @@ public class {{ options.name }}Client {
             result = .success(decoded)
             if decoded.successful {
                 requestBehaviour.onSuccess(result: decoded.response as Any)
+            } else {
+                requestBehaviour.onFailure(response: response, error: .unexpectedStatusCode(statusCode: statusCode, data: data))
             }
         } catch let error {
             let apiError: APIClientError
@@ -275,7 +277,7 @@ public class {{ options.name }}Client {
             }
 
             result = .failure(apiError)
-            requestBehaviour.onFailure(error: apiError)
+            requestBehaviour.onFailure(response: response, error: apiError)
         }
 
         let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
