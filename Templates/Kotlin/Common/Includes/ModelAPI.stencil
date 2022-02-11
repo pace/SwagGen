@@ -20,7 +20,7 @@ object {{ type }}API {
             {% endif %}
             @retrofit2.http.Body {{ body.name }}: {{ body.optionalType }}
             {% endif %}
-        ): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}Void{% endif %}>
+        ): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}ResponseBody{% endif %}>
     }
     {% for enum in requestEnums where not enum.isGlobal %}
 
@@ -39,7 +39,7 @@ object {{ type }}API {
     }
 
     {% endif %}
-    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{{ param.name }}: {{ param.optionalType }}, {% else %}{% endif %}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}, {% endif %}readTimeout: Long? = null{% if successResponse.schema.raw.type  == "object" and successResponse.acceptHeaderEnums.count > 1 %}, accept: {{type}}AcceptHeader? = null{% endif %}): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}Void{% endif %}> {
+    fun {{ options.modelProtocol }}.{{ tag|upperCamelCase }}API.{{ type|lowerCamelCase }}({% for param in nonBodyParams %}{% if param.raw.in == "path" or param.raw.in == "query" or param.raw.in == "header" %}{{ param.name }}: {{ param.optionalType }}, {% else %}{% endif %}{% endfor %}{% if body %}{{ body.name}}: {{ body.optionalType }}, {% endif %}readTimeout: Long? = null{% if successResponse.schema.raw.type  == "object" and successResponse.acceptHeaderEnums.count > 1 %}, accept: {{type}}AcceptHeader? = null{% endif %}): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}ResponseBody{% endif %}> {
         val client = OkHttpClient.Builder()
                         .addNetworkInterceptor(InterceptorUtils.getInterceptor({% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}null{% elif successResponse.schema.raw.type == "object"%}"application/vnd.api+json"{% elif contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType%}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if authorizationRequired == true %}true{% else %}false{% endif %}))
                         .authenticator(InterceptorUtils.getAuthenticator())
