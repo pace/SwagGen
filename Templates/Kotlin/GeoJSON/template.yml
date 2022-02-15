@@ -45,6 +45,7 @@ options:
     - path: moe.banana.jsonapi2.Resource
     - path: moe.banana.jsonapi2.ResourceAdapterFactory
     - path: okhttp3.OkHttpClient
+    - path: okhttp3.ResponseBody
     - path: retrofit2.Call
     - path: retrofit2.Retrofit
     - path: retrofit2.converter.moshi.MoshiConverterFactory
