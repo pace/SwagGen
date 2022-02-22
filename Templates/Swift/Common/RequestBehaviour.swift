@@ -37,11 +37,7 @@ public extension {{ options.name }}RequestBehaviour {
 
 struct {{ options.name }}RequestBehaviourImplementation: {{ options.name }}RequestBehaviour {
     func onFailure(request: Any{{ options.name }}Request, response: HTTPURLResponse, error: APIClientError) {
-        if #available(iOS 13.0, *) {
-            SDKLogger.e("[{{ options.name }}] Request with request-id: \(response.value(forHTTPHeaderField: "request-id") ?? "unknown") failed with error: \(error.description)")
-        } else {
-            SDKLogger.e("[{{ options.name }}] Request with request-id: \(response.allHeaderFields["request-id"] ?? "unknown") failed with error: \(error.description)")
-        }
+        SDKLogger.e("[{{ options.name }}] Request (\(response.url?.absoluteString ?? "invalid url")) with request-id: \(response.allHeaderFields["request-id"] ?? "unknown") failed with error: \(error.description)")
     }
 }
 
