@@ -279,7 +279,7 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                 {% for response in responses where response.statusCode %}
                 {% if response.type %}
                 {% if response.type == "File" %}
-                case {{ response.statusCode }}: self = try .{{ response.name }}(data)
+                case {{ response.statusCode }}: self = .{{ response.name }}(data)
                 {% else %}
                 {% if response.isAnyType %}
                 case {{ response.statusCode }}: self = try .{{ response.name }}(decoder.decodeAnyJson(from: data))
