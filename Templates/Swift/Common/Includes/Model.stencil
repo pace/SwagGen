@@ -56,6 +56,60 @@ public {{ options.modelType }} {{ type }}: {% if parent %}{{ parent.type }}{% el
     {% endif %}
     {% endfor %}
     {% for property in properties %}
+    {% if property.isPoly %}
+    public enum {{ property.polyTypeString }}: Equatable, Codable {
+        {% for polyType in property.polyTypes %}
+        case {{ polyType.name }}({{ polyType.type }})
+        {% endfor %}
+        {% for polyType in property.polyTypes %}
+
+        public var {{ polyType.name }}: {{ polyType.type }}? {
+            guard case let .{{ polyType.name }}({{ polyType.name }}) = self else { return nil }
+            return {{ polyType.name }}
+        }
+
+        public init(_ {{ polyType.name }}: {{ polyType.type }}) {
+            self = .{{ polyType.name }}({{ polyType.name }})
+        }
+        {% endfor %}
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+
+            switch self {
+            {% for polyType in property.polyTypes %}
+            case .{{ polyType.name }}(let {{ polyType.name }}):
+                try container.encode({{ polyType.name }})
+            {% endfor %}
+            }
+        }
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+
+            let attempts = [
+                {% for polyType in property.polyTypes %}
+                try decode({{ polyType.type }}.self, from: container).map { {{ property.polyTypeString }}.{{ polyType.name }}($0) }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+
+            let maybeVal: {{ property.polyTypeString }}? = attempts
+                .lazy
+                .compactMap { $0.value }
+                .first
+
+            guard let val = maybeVal else {
+                let individualFailures = attempts.map { $0.error }.compactMap { $0 }
+                throw PolyDecodeNoTypesMatchedError(codingPath: decoder.codingPath,
+                                                    individualTypeFailures: individualFailures)
+            }
+
+            self = val
+        }
+    }
+    {% endif %}
+    {% endfor %}
+    {% for property in properties %}
 
     {% if property.description %}
     /** {{ property.description }} */
@@ -90,16 +144,16 @@ public {{ options.modelType }} {{ type }}: {% if parent %}{{ parent.type }}{% el
         let decoder = JSONDecoder()
 
         {% for polyType in property.polyTypes %}
-        let {{ property.name }}{{ polyType }}s = {{ property.name }}.filter { $0["type"] as? String == {{ polyType }}.{{ options.modelPrefix }}Type.allCases.first?.rawValue }
+        let {{ property.name }}{{ polyType.type }}s = {{ property.name }}.filter { $0["type"] as? String == {{ polyType.type }}.{{ options.modelPrefix }}Type.allCases.first?.rawValue }
         {% endfor %}
 
         {% for polyType in property.polyTypes %}
-        let decoded{{ polyType }}s: [{{ polyType }}] = try decoder.decodeJSONObject({{ property.name }}{{ polyType }}s)
+        let decoded{{ polyType.type }}s: [{{ polyType.type }}] = try decoder.decodeJSONObject({{ property.name }}{{ polyType.type }}s)
         {% endfor %}
 
         self.{{ property.name }} =
-            {% for polyType in property.polyTypes %}{% if forloop.first %}decoded{{ polyType }}s.map({{ property.polyTypeString }}.init){% else %}
-            + decoded{{ polyType }}s.map({{ property.polyTypeString }}.init)
+            {% for polyType in property.polyTypes %}{% if forloop.first %}decoded{{ polyType.type }}s.map({{ property.polyTypeString }}.init){% else %}
+            + decoded{{ polyType.type }}s.map({{ property.polyTypeString }}.init)
             {% endif %}{% endfor %}
 
         {% else %}

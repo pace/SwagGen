@@ -51,6 +51,16 @@ public extension Property {
     }
 }
 
+public struct PolyType {
+    public let name: String
+    public let type: String
+
+    public init(name: String, type: String) {
+        self.name = name
+        self.type = type
+    }
+}
+
 extension ObjectSchema: JSONObjectConvertible {
 
     public init(jsonDictionary: JSONDictionary) throws {

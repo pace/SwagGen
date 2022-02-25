@@ -169,7 +169,7 @@ public class SwiftFormatter: CodeFormatter {
                 schemas.append(getSchemaType(name: name, schema: schema))
             }
 
-            return "Poly\(schemas.count)<\(schemas.joined(separator: ","))>"
+            return "\(name.capitalized)PolyType"
 
         case .any:
             return templateConfig.getStringOption("anyType") ?? "Any"
@@ -321,11 +321,20 @@ public class SwiftFormatter: CodeFormatter {
            groupSchema.schemas.count > 1 {
             let schemas: [String] = groupSchema.schemas.map { getSchemaType(name: name, schema: $0) }
             context["isPoly"] = true
-            context["polyTypes"] = schemas
-            context["polyTypeString"] = "Poly\(schemas.count)<\(schemas.joined(separator: ","))>"
+            context["polyTypes"] = getPolyTypes(schemas)
+            context["polyTypeString"] = "\(name.capitalized)PolyType"
         }
 
         return context
+    }
+
+    override func getPolyTypes(_ schemas: [String]) -> [PolyType] {
+        schemas.map {
+            let capitalizedName = $0.dropFirst(modelPrefix.count)
+            let name = capitalizedName.prefix(1).lowercased() + capitalizedName.dropFirst()
+            let type = $0
+            return PolyType(name: name, type: type)
+        }
     }
 
     override func getResponseContext(_ response: OperationResponse) -> Context {

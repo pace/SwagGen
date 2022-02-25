@@ -608,6 +608,10 @@ public class CodeFormatter {
         return "UNKNOWN_SCHEMA_TYPE"
     }
 
+    func getPolyTypes(_ schemas: [String]) -> [PolyType] {
+        []
+    }
+
     // MARK: escaping
 
     func escapeName(_ name: String) -> String {
