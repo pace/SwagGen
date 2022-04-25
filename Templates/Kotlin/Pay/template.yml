@@ -28,7 +28,7 @@ options:
     - path: moe.banana.jsonapi2.HasOne
     - path: moe.banana.jsonapi2.JsonApi
     - path: moe.banana.jsonapi2.Resource
-    - path: java.util.*
+    - path: java.util.Date
   apiDependencies:
     - path: cloud.pace.sdk.api.pay.PayAPI
     - path: cloud.pace.sdk.api.pay.generated.model.*
@@ -51,7 +51,7 @@ options:
     - path: retrofit2.converter.moshi.MoshiConverterFactory
     - path: retrofit2.http.*
     - path: java.io.File
-    - path: java.util.*
+    - path: java.util.Date
     - path: java.util.concurrent.TimeUnit
 templateFiles:
   - path: Common/Sources/ServiceAPI.kt
