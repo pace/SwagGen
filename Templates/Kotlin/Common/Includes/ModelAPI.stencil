@@ -7,6 +7,7 @@ object {{ type }}API {
         {% if description %}
         /* {{ description }} */
         {% endif %}
+        {% if body.optionalType == "Map<String, Any>" %}@JvmSuppressWildcards{% endif %}
         @{{ method|uppercase }}("{% for part in path | split:"/" %}{{ part }}{% ifnot forloop.first %}{% ifnot forloop.last %}/{% endif %}{% endif %}{% endfor %}")
         fun {{ type|lowerCamelCase }}(
             @HeaderMap headers: Map<String, String>,

@@ -53,6 +53,10 @@ public class KotlinFormatter: CodeFormatter {
         let properties = requestProperties.flatMap { $0 }
         
         let schemas = context["schemas"] as? [Context]
+        context["schemas"] = schemas?.filter { schema in
+            schema["type"] as? String != "Errors"
+        }
+        
         let bodyPropertySchemas = schemas?.filter { schema in
             return properties.contains(where: { schema["type"] as? String == $0["type"] as? String })
         }
