@@ -127,6 +127,14 @@ public class KotlinFormatter: CodeFormatter {
                 return escapeType(name.upperCamelCased())
             }
         case let .reference(reference):
+            let firstProperty = reference.component.value.properties.first
+            let firstPropertyName = firstProperty?.name
+            if (firstPropertyName == "data") {
+                let type = firstProperty?.schema.metadata.type
+                if case .array = type {
+                    return "List<\(reference.name)>"
+                }
+            }
             return getSchemaTypeName(reference.component)
         case .any:
             return templateConfig.getStringOption("anyType") ?? "Any"
@@ -159,11 +167,30 @@ public class KotlinFormatter: CodeFormatter {
         
         let properties = context["properties"] as? [Context]
         context["allProperties"] = properties
+        
         let names = properties?.compactMap { $0["name"] as? String } ?? []
-        context["isResource"] = ["id", "type"].allSatisfy(names.contains)
+        let data = properties?.first(where: { $0["type"] as? String == "Data" })
+        
+        context["isResource"] = ["id", "type"].allSatisfy(names.contains) || data != nil
         context["attributes"] = properties?.filter({($0["name"] as! String) == "attributes"})
         context["relationships"] = properties?.filter({($0["name"] as! String) == "relationships"})
-        context["properties"] = properties?.filter({($0["name"] as! String) != "id" && ($0["name"] as! String) != "type" && ($0["name"] as! String) != "attributes" && ($0["name"] as! String) != "relationships"})
+        context["properties"] = properties?.filter({
+            ($0["name"] as! String) != "id" &&
+            ($0["name"] as! String) != "type" &&
+            ($0["name"] as! String) != "attributes" &&
+            ($0["name"] as! String) != "relationships" &&
+            ($0["type"] as! String) != "Data"
+        })
+        
+        return context
+    }
+    
+    override func getSchemaContent(_ schema: ComponentObject<Schema>) -> Context {
+        var context = super.getSchemaContent(schema)
+        
+        if (schema.value.properties.first?.name == "data") {
+            context["isResource"] = true
+        }
         
         return context
     }
