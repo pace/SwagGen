@@ -78,6 +78,365 @@ public class SwiftFormatter: CodeFormatter {
         super.init(spec: spec, templateConfig: templateConfig)
     }
 
+    override func getSpecContext() -> Context {
+        var context = super.getSpecContext()
+
+        let result = renameRequestBodyTypes(for: context)
+        let schemaTypesToRename = result.1
+        context = result.0
+
+        let schemaTypesToDuplicate = schemaTypesToDuplicate(for: context, in: schemaTypesToRename)
+        context = renameAndDuplicateRequestSchemas(for: context, schemaTypesToRename: schemaTypesToRename, schemaTypesToDuplicate: schemaTypesToDuplicate)
+        context = flattenHierachy(for: context)
+        context = resolveRelationships(for: context)
+
+        return context
+    }
+
+    private func renameRequestBodyTypes(for context: Context) -> (Context, Set<String>) {
+        var context = context
+        var schemaTypesToRename: Set<String> = []
+        var operations = context["operations"] as? [Context] ?? []
+
+        // Iterate over all request schemas and add `Request` to the model types
+        // These model types must not be flattened otherwise the requests won't work
+        // Find the type of the `data` property in the `Body` type or the type of the property called `body`
+        operations = operations.reduce(into: [], {
+            var operation = $1
+            let hasBody = operation["hasBody"] as? Bool ?? false
+
+            guard hasBody, var body = operation["body"] as? Context else {
+                $0.append(operation)
+                return
+            }
+
+            var requestSchemas = operation["requestSchemas"] as? [Context] ?? []
+
+            // If there are no request schemas check for property called `body` and its type
+            if requestSchemas.isEmpty,
+               let bodyName = body["name"] as? String,
+               let bodyType = body["type"] as? String,
+               bodyName == "body",
+               bodyType.hasPrefix(modelPrefix),
+               !bodyType.hasSuffix("Request") {
+
+                schemaTypesToRename.insert(bodyType)
+                body = newRequestTypeName(for: bodyType, in: body)
+                operation["body"] = body
+            } else {
+                requestSchemas = requestSchemas.reduce(into: [], {
+                    var requestSchema = $1
+                    let requestSchemaType = requestSchema["type"] as? String ?? ""
+
+                    guard requestSchemaType == "Body" else {
+                        $0.append(requestSchema)
+                        return
+                    }
+
+                    var properties = requestSchema["properties"] as? [Context] ?? []
+
+                    properties = properties.reduce(into: [], {
+                        var property = $1
+
+                        // Check for the type of the property called `data`
+                        if let propertyName = property["name"] as? String,
+                           let propertyType = property["type"] as? String,
+                           propertyName == "data",
+                           propertyType.hasPrefix(modelPrefix),
+                           !propertyType.hasSuffix("Request") {
+
+                            schemaTypesToRename.insert(propertyType)
+                            property = newRequestTypeName(for: propertyType, in: property)
+                        }
+
+                        $0.append(property)
+                    })
+
+                    requestSchema["properties"] = properties
+                    $0.append(requestSchema)
+                })
+
+                operation["requestSchemas"] = requestSchemas
+            }
+
+            $0.append(operation)
+        })
+
+        context["operations"] = operations
+        return (context, schemaTypesToRename)
+    }
+
+    private func newRequestTypeName(for type: String, in context: Context) -> Context {
+        var context = context
+
+        let isOptional = context["optional"] as? Bool ?? false
+        let newType = "\(type)Request"
+
+        context["type"] = newType
+        context["optionalType"] = isOptional ? "\(newType)?" : newType
+
+        return context
+    }
+
+    // Look for a response type that is included in the set of types that have to be renamed
+    // This means it's a type that is used as request AND response model and therefore has to be duplicated
+    private func schemaTypesToDuplicate(for context: Context, in schemaTypesToRename: Set<String>) -> Set<String> {
+        var schemaTypesToDuplicate: Set<String> = []
+        let operations = context["operations"] as? [Context] ?? []
+
+        // In case the response does not have an enclosing type e.g. Status201
+        for operation in operations {
+            let responses = operation["responses"] as? [Context] ?? []
+
+            for response in responses {
+                guard let responseType = response["type"] as? String, schemaTypesToRename.contains(responseType) else { continue }
+                schemaTypesToDuplicate.insert(responseType)
+            }
+        }
+
+        // In case the response does have an enclosing type
+        // Look for type of property named `data`
+        for operation in operations {
+            let responseSchemas = operation["responseSchemas"] as? [Context] ?? []
+
+            for responseSchema in responseSchemas {
+                let properties = responseSchema["properties"] as? [Context] ?? []
+
+                for property in properties {
+                    let propertyType = property["type"] as? String ?? ""
+                    let polyTypes = (property["polyTypes"] as? [PolyType] ?? []).map { $0.type }.filter { schemaTypesToRename.contains($0) }
+
+                    if schemaTypesToRename.contains(propertyType) {
+                        schemaTypesToDuplicate.insert(propertyType)
+                    }
+
+                    polyTypes.forEach {
+                        schemaTypesToDuplicate.insert($0)
+                    }
+                }
+            }
+        }
+
+        return schemaTypesToDuplicate
+    }
+
+    // The schemas that are only used as a request model have to be renamed
+    // The ones that are also used as a response model have to be duplicated and renamed
+    private func renameAndDuplicateRequestSchemas(for context: Context, schemaTypesToRename: Set<String>, schemaTypesToDuplicate: Set<String>) -> Context {
+        var context = context
+        var schemas = context["schemas"] as? [Context] ?? []
+
+        schemas = schemas.reduce(into: [], {
+            var schema = $1
+            let schemaType = schema["type"] as? String ?? ""
+            let newSchemaType = "\(schemaType)Request"
+
+            if schemaTypesToRename.contains(schemaType) && schemaTypesToDuplicate.contains(schemaType) {
+                // Duplicate schema
+                var duplicatedSchema = schema
+                duplicatedSchema["type"] = newSchemaType
+                $0.append(duplicatedSchema)
+            } else if schemaTypesToRename.contains(schemaType) {
+                // Rename schema
+                schema["type"] = newSchemaType
+            }
+
+            $0.append(schema)
+        })
+
+        context["schemas"] = schemas
+        return context
+    }
+
+    private func flattenHierachy(for context: Context) -> Context {
+        var context = context
+
+        var schemas = context["schemas"] as? [Context] ?? []
+        var operations = context["operations"] as? [Context] ?? []
+
+        // Schemas are basically classes / structs / enums (models for requests and responses)
+        // Response and Request Models (e.g PCFuelingApproachingResponse, PCFuelingTransactionsRequest)
+        schemas = schemas.reduce(into: [], {
+            var schema = $1
+
+            let schemaType = schema["type"] as? String ?? ""
+            let isRequest = schemaType.hasPrefix(modelPrefix) && schemaType.hasSuffix("Request")
+
+            // Do not flatten schemas of requests
+            if !isRequest {
+                schema = flattenHierachy(for: schema)
+                schema = flattenSchemaContext(for: schema)
+            }
+
+            $0.append(schema)
+        })
+
+        // Inline response models (e.g FuelingAPIApproachingAtTheForecourt.Response.Status201)
+        operations = operations.reduce(into: [], {
+            var operation = $1
+            var responses = operation["responses"] as? [Context] ?? []
+
+            // The response schemas contain the properties that need to be removed (e.g. included)
+            var responseSchemas = operation["responseSchemas"] as? [Context] ?? []
+
+            responses = responses.reduce(into: [], {
+                var response = $1
+
+                // NOTE: - For responses the key is 'schema' and not 'schemas'
+                if var schema = response["schema"] as? Context {
+                    schema = flattenHierachy(for: schema)
+                    schema = flattenSchemaContext(for: schema)
+                    response["schema"] = schema
+                }
+
+                $0.append(response)
+            })
+
+            responseSchemas = responseSchemas.reduce(into: [], {
+                var responseSchema = $1
+                responseSchema = flattenHierachy(for: responseSchema)
+                responseSchema = flattenSchemaContext(for: responseSchema)
+                $0.append(responseSchema)
+            })
+
+            operation["responses"] = responses
+            operation["responseSchemas"] = responseSchemas
+            $0.append(operation)
+        })
+
+        context["schemas"] = schemas
+        context["operations"] = operations
+
+        return context
+    }
+
+    private func flattenSchemaContext(for context: Context) -> Context {
+        var context = context
+
+        let schemas = context["schemas"] as? [Context]
+        let properties = context["allProperties"] as? [Context] ?? []
+        let enums = context["enums"] as? [Context]
+
+        // Separate relationships property
+        // Remove relationship hierarchy level and get all properties
+        let relationships = properties.filter { ($0["name"] as! String) == "relationships" }
+        let relationshipProperties = relationships.compactMap { $0["allProperties"] as? [Context] }.flatMap { $0 }
+        context["relationships"] = relationships
+
+        // Separate attributes property
+        // Remove attributes hierarchy level and get all properties
+        let attributes = properties.filter { ($0["name"] as! String) == "attributes" }
+        let attributeProperties = attributes.compactMap { $0["allProperties"] as? [Context] }.flatMap { $0 }
+        let attributeSchemas = attributes.compactMap { $0["schemas"] as? [Context] }.flatMap { $0 }
+        let attributeEnums = attributes.compactMap { $0["enums"] as? [Context] }.flatMap { $0 }
+
+        // Remove specified properties
+        // Add properties of relationships and attributes to get rid of their hierarchy level
+        context["properties"] = filterProperties(properties)
+        + relationshipProperties
+        + attributeProperties
+
+        // Remove specified optional properties
+        let optionalProperties = context["optionalProperties"] as? [Context] ?? []
+        context["optionalProperties"] = filterProperties(optionalProperties)
+
+        // Remove specified required properties
+        let requiredProperties = context["requiredProperties"] as? [Context] ?? []
+        context["requiredProperties"] = filterProperties(requiredProperties)
+
+        // Remove specified schemas (classes etc.)
+        // Add schemas of attributes to get rid of its hierarchy level
+        context["schemas"] = (schemas ?? []).filter {
+            ![
+                "Attributes",
+                "Relationships"
+            ].contains($0["type"] as! String)
+        }
+        + attributeSchemas
+
+        // Add enums of attributes to get rid of its hierarchy level
+        context["enums"] = (enums ?? []) + attributeEnums
+
+        return context
+    }
+
+    private func filterProperties(_ properties: [Context]) -> [Context] {
+        properties.filter {
+            ![
+                "attributes",
+                "relationships",
+                "included"
+            ].contains($0["name"] as! String)
+        }
+    }
+
+    private func resolveRelationships(for context: Context) -> Context {
+        var context = context
+        var schemas = context["schemas"] as? [Context] ?? []
+
+        for (schemaIndex, schema) in schemas.enumerated() {
+            guard let relationships = schema["relationships"] as? [Context],
+                  var properties = schema["properties"] as? [Context] else { continue }
+
+            // Go through all the properties of all relationships
+            for relationship in relationships {
+                guard let allProperties = relationship["allProperties"] as? [Context] else { continue }
+
+                for property in allProperties {
+                    let relationshipPropertyName = property["name"] as! String
+                    let relationshipPropertyType = capitalizeFirstLetter(in: relationshipPropertyName)
+
+                    guard let schemas = property["schemas"] as? [Context],
+                          let dataTypeSchema = schemas.first(where: { ($0["type"] as! String) == "DataType" }),
+                          let dataTypeEnums = dataTypeSchema["enums"] as? [Context],
+                          let typeEnum = dataTypeEnums.first(where: { ($0["enumName"] as! String) == "\(modelPrefix)Type" }),
+                          let typeEnumValues = (typeEnum["enums"] as? [Context])?.first,
+                          let typeName = typeEnumValues["value"] as? String
+                    else {
+                        // If there is no schemas for this property use relationship type as model type
+                        var type = relationshipPropertyType
+
+                        if !type.hasPrefix(modelPrefix) {
+                            type = "\(modelPrefix)\(relationshipPropertyType)"
+                        }
+
+                        if let propertyIndex = properties.firstIndex(where: { ($0["name"] as! String) == relationshipPropertyName }) {
+                            properties[propertyIndex]["type"] = type
+                            properties[propertyIndex]["optionalType"] = "\(type)?"
+                        }
+                        continue
+                    }
+
+                    var type = "\(modelPrefix)\(capitalizeFirstLetter(in: typeName))"
+
+                    // Check if relationshipPropertyType is array
+                    guard let relationshipSchemas = relationship["schemas"] as? [Context],
+                          let relationshipSchema = relationshipSchemas.first(where: { ($0["type"] as! String) == relationshipPropertyType }),
+                          let relationshipProperties = relationshipSchema["allProperties"] as? [Context],
+                          let dataProperty = relationshipProperties.first(where: { ($0["name"] as! String) == "data" })
+                    else { continue }
+
+                    let isArray = (dataProperty["isArray"] as? Bool) ?? false
+
+                    guard let propertyIndex = properties.firstIndex(where: { ($0["name"] as! String) == relationshipPropertyName }) else { continue }
+
+                    if isArray {
+                        type = "[\(type)]"
+                    }
+
+                    properties[propertyIndex]["type"] = type
+                    properties[propertyIndex]["optionalType"] = "\(type)?"
+                }
+            }
+
+            schemas[schemaIndex]["properties"] = properties
+        }
+
+        context["schemas"] = schemas
+
+        return context
+    }
+
     override func getSchemaType(name: String, schema: Schema, checkEnum: Bool = true) -> String {
 
         var enumValue: String?
@@ -358,5 +717,9 @@ public class SwiftFormatter: CodeFormatter {
 
     override func getEscapedName(_ name: String) -> String {
         return "`\(name)`"
+    }
+
+    private func capitalizeFirstLetter(in string: String) -> String {
+        string.prefix(1).capitalized + string.dropFirst()
     }
 }

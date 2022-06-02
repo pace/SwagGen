@@ -1,6 +1,7 @@
 {% include "Common/Includes/Header.stencil" %}
 
 import Foundation
+import Japx
 
 /// Manages and sends APIRequests
 public class {{ options.name }}Client {
@@ -19,7 +20,7 @@ public class {{ options.name }}Client {
     /// These headers will get added to every request
     public var defaultHeaders: [String: String]
 
-    public var jsonDecoder = JSONDecoder()
+    public var jsonDecoder = JapxDecoder()
     public var jsonEncoder = JSONEncoder()
 
     public var decodingQueue = DispatchQueue(label: "{{ options.name }}Client", qos: .utility, attributes: .concurrent)
@@ -30,7 +31,7 @@ public class {{ options.name }}Client {
         self.baseURL = baseURL
         self.behaviours = self.behaviours + behaviours
         self.defaultHeaders = defaultHeaders
-        jsonDecoder.dateDecodingStrategy = .custom(dateDecoder)
+        jsonDecoder.jsonDecoder.dateDecodingStrategy = .custom(dateDecoder)
         jsonEncoder.dateEncodingStrategy = .formatted({{ options.name }}.dateEncodingFormatter)
         self.session = URLSession(configuration: configuration, delegate: nil, delegateQueue: OperationQueue())
     }

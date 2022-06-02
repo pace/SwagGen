@@ -1,6 +1,7 @@
 {% include "Common/Includes/Header.stencil" %}
 
 import Foundation
+import Japx
 
 {% if options.modelProtocol %}
 public protocol {{ options.modelProtocol }}: Codable, Equatable { }
@@ -18,6 +19,20 @@ public protocol ResponseDecoder {
 extension JSONDecoder: ResponseDecoder {}
 
 extension JSONDecoder {
+    func decodeJSONObject<T: Decodable>(_ object: Any) throws -> T {
+        let jsonData = try JSONSerialization.data(withJSONObject: object, options: [])
+        let result = try decode(T.self, from: jsonData)
+        return result
+    }
+}
+
+extension JapxDecoder: ResponseDecoder {
+    public func decode<T>(_ type: T.Type, from: Data) throws -> T where T : Decodable {
+        try decode(type, from: from, includeList: nil)
+    }
+}
+
+extension JapxDecoder {
     func decodeJSONObject<T: Decodable>(_ object: Any) throws -> T {
         let jsonData = try JSONSerialization.data(withJSONObject: object, options: [])
         let result = try decode(T.self, from: jsonData)
