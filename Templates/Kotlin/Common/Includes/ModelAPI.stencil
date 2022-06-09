@@ -68,11 +68,8 @@ object {{ type }}API {
                         Moshi.Builder()
                             .add(
                                 ResourceAdapterFactory.builder()
-                                    {% for ref in successResponse.schema.raw.properties.included.items.oneOf %}
-                                    {% for class in ref.$ref|split:"/" %}
-                                    {% if forloop.last %}
-                                    .add({{class}}::class.java){% endif %}
-                                    {% endfor %}
+                                    {% for resource in successResponse.resources %}
+                                    .add({{ resource }}::class.java)
                                     {% endfor %}
                                     .build()
                             )
