@@ -53,7 +53,7 @@ class {{ type }} {
     {% if property.description %}
     /* {{ property.description }} */
     {% endif %}
-    private var {{ property.name }}: {% if property.properties.first.type == "List<Data>" %}HasMany<{{ property.properties.first.raw.items.properties.type.enum.first|upperCamelCase }}> = HasMany(){% else %}HasOne<{{ property.type }}> = HasOne(){% endif %}
+    private var {{ property.name }}: {% if property.hasMany %}HasMany<{{ property.type }}> = HasMany(){% else %}HasOne<{{ property.type }}> = HasOne(){% endif %}
     fun get{{ property.name|upperCamelCase }}() = {{ property.name }}.get(document)
     {% endfor %}
 {% endfor %}

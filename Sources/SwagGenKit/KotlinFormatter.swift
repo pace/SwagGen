@@ -52,18 +52,138 @@ public class KotlinFormatter: CodeFormatter {
         }
         let properties = requestProperties.flatMap { $0 }
         
-        let schemas = context["schemas"] as? [Context]
-        context["schemas"] = schemas?.filter { schema in
+        let schemas = context["schemas"] as? [Context] ?? []
+        var filteredSchemas = schemas.filter { schema in
             schema["type"] as? String != "Errors"
         }
         
-        let bodyPropertySchemas = schemas?.filter { schema in
+        for index in filteredSchemas.indices {
+            var relationships = filteredSchemas[index]["relationships"] as? [Context] ?? []
+            for index in relationships.indices {
+                var newProperties: [Context] = []
+                
+                (relationships[index]["properties"] as? [Context] ?? []).forEach{ property in
+                    let type = property["type"] as? String
+                    let name = property["name"]
+                    let hasMany = (property["properties"] as? [Context])?.first(where: {$0["name"] as? String == "data"})?["isArray"]
+                    
+                    var component = spec.components.schemas.first(where: {$0.name.lowercased() == type?.lowercased()})
+                    if component == nil {
+                        let schema = (property["schemas"] as? [Context])?.first
+                        let enums = (schema?["enums"] as? [Context])?.first?["enums"] as? [Context]
+                        let enumValue = (enums?.first?["value"] as? String)?.lowercased()
+                        component = spec.components.schemas.first(where: {$0.name.lowercased() == enumValue})
+                    }
+                    
+                    if let component = component {
+                        if case let .array(arraySchema) = component.value.type {
+                            // Is a list of a relationship schema (HasMany) e.g. PaymentTokens
+                            // Get list item schema
+                            if case let .single(arraySchemaItems) = arraySchema.items {
+                                let schema = spec.components.schemas.first(where: {$0.name == arraySchemaItems.type.reference?.name})
+                                if let schema = schema {
+                                    var context = getSchemaContent(schema)
+                                    context["name"] = name
+                                    context["hasMany"] = hasMany
+                                    newProperties.append(context)
+                                }
+                            }
+                        } else {
+                            let dataProperties = component.value.properties.first(where: {$0.name == "data"})?.schema.properties
+                            let type = dataProperties?.first(where: {$0.name == "type"})
+                            let enumValue = type?.enumValue?.cases.first as? String
+                            if let enumValue = enumValue {
+                                // Is relationship reference class e.g. PaymentMethodVendorRelationship
+                                // Find correct schema e.g. PaymentMethodVendor
+                                let schema = spec.components.schemas.first(where: {$0.name.lowercased() == enumValue.lowercased()})
+                                if let schema = schema {
+                                    var context = getSchemaContent(schema)
+                                    context["name"] = name
+                                    context["hasMany"] = hasMany
+                                    newProperties.append(context)
+                                }
+                            } else {
+                                // Is already the correct schema e.g. GasStation
+                                var context = getSchemaContent(component)
+                                context["name"] = name
+                                context["hasMany"] = hasMany
+                                newProperties.append(context)
+                            }
+                        }
+                    }
+                }
+                
+                relationships[index]["properties"] = newProperties
+            }
+            
+            filteredSchemas[index]["relationships"] = relationships
+        }
+        
+        context["schemas"] = filteredSchemas
+        
+        let bodyPropertySchemas = schemas.filter { schema in
             return properties.contains(where: { schema["type"] as? String == $0["type"] as? String })
         }
         
         context["bodySchemas"] = bodyPropertySchemas
         
+        // Add resources to successResponse
+        var operations = context["operations"] as? [Context] ?? []
+        for index in operations.indices {
+            let successResponse = operations[index]["successResponse"] as? Context
+            if var successResponse = successResponse {
+                let successResponseSchema = successResponse["schema"] as? Context
+                let schema = (successResponseSchema?["properties"] as? [Context])?.first
+                if let schema = schema {
+                    let resources = getResources(schemaContext: schema, allSchemas: filteredSchemas)
+                    successResponse["resources"] = Array(Set(resources))
+                    operations[index]["successResponse"] = successResponse
+                }
+            }
+        }
+        
+        context["operations"] = operations
+        
         return context
+    }
+    
+    private func getResources(schemaContext: Context, allSchemas: [Context], allResources: [String] = []) -> [String] {
+        var newAllResources = allResources
+        let schemaType = schemaContext["type"] as? String
+        let schema = spec.components.schemas.first(where: {$0.name == schemaType})
+        
+        var relationships: [Context] = []
+        if let schema = schema {
+            if case let .array(arraySchema) = schema.value.type {
+                if case let .single(arraySchemaItems) = arraySchema.items {
+                    // successResponse is a list/typealias PaymentMethods
+                    let schema = allSchemas.first(where: {$0["type"] as? String == arraySchemaItems.type.reference?.name})
+                    if let schema = schema {
+                        relationships = schema["relationships"] as? [Context] ?? []
+                    }
+                }
+            } else {
+                // successResponse is an object e.g. PaymentMethod
+                let schema = allSchemas.first(where: {$0["type"] as? String == schema.name})
+                if let schema = schema {
+                    relationships = schema["relationships"] as? [Context] ?? []
+                }
+            }
+        }
+        
+        relationships
+            .flatMap({$0["properties"] as? [Context] ?? []})
+            .forEach({
+                let type = $0["type"] as? String
+                if let type = type {
+                    if (!newAllResources.contains(type)) {
+                        newAllResources.append(type)
+                        newAllResources.append(contentsOf: getResources(schemaContext: $0, allSchemas: allSchemas, allResources: newAllResources))
+                    }
+                }
+            })
+        
+        return newAllResources
     }
     
     override func getSchemaType(name: String, schema: Schema, checkEnum: Bool = true) -> String {
