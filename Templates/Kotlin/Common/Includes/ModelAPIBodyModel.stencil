@@ -17,7 +17,7 @@ class {{ type }} {
     {% if property.description %}
     /* {{ property.description }} */
     {% endif %}
-    {% if property.required and not property.isPrimitiveType %}lateinit {% endif %}var {{ property.name }}: {{ property.type }}{% if not property.isPrimitiveType %}Body{% endif %}{% if not property.required or property.isPrimitiveType %}? = null{% endif %}
+    {% if property.required and not property.isPrimitiveType %}lateinit {% endif %}var {{ property.name }}: {% if property.type|contains:"List<" %}{% if not property.isPrimitiveType %}{% for element in property.type|split:">" %}{% if forloop.first %}{{ element }}Body>{% endif %}{% endfor %}{% else %}property.type{%endif%}{% else %}{{ property.type }}{% if not property.isPrimitiveType %}Body{% endif %}{% endif %}{% if not property.required or property.isPrimitiveType %}? = null{% endif %}
 {% endfor %}
 {% for enum in enums where not enum.isGlobal %}
     
