@@ -30,25 +30,14 @@ options:
     - path: moe.banana.jsonapi2.Resource
     - path: java.util.Date
   apiDependencies:
+    - path: cloud.pace.sdk.api.request.BaseRequest
     - path: cloud.pace.sdk.api.geojson.GeoJSONAPI
     - path: cloud.pace.sdk.api.geojson.generated.model.*
-    - path: cloud.pace.sdk.api.utils.EnumConverterFactory
-    - path: cloud.pace.sdk.api.utils.InterceptorUtils
     - path: cloud.pace.sdk.utils.toIso8601
     - path: com.google.gson.annotations.SerializedName
     - path: com.squareup.moshi.Json
-    - path: com.squareup.moshi.Moshi
-    - path: com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
-    - path: com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-    - path: moe.banana.jsonapi2.JsonApi
-    - path: moe.banana.jsonapi2.JsonApiConverterFactory
-    - path: moe.banana.jsonapi2.Resource
-    - path: moe.banana.jsonapi2.ResourceAdapterFactory
-    - path: okhttp3.OkHttpClient
     - path: okhttp3.ResponseBody
     - path: retrofit2.Call
-    - path: retrofit2.Retrofit
-    - path: retrofit2.converter.moshi.MoshiConverterFactory
     - path: retrofit2.http.*
     - path: java.io.File
     - path: java.util.Date
