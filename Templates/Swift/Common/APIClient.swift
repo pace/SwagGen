@@ -55,7 +55,7 @@ public class {{ options.name }}Client {
             urlRequest = try request.createURLRequest(baseURL: baseURL, encoder: jsonEncoder)
         } catch {
             let error = APIClientError.requestEncodingError(error)
-            requestBehaviour.onFailure(response: HTTPURLResponse(), error: error)
+            requestBehaviour.onFailure(urlRequest: nil, response: HTTPURLResponse(), error: error)
             let response = {{ options.name }}Response<T>(request: request, result: .failure(error))
             complete(response)
             return nil
@@ -80,7 +80,7 @@ public class {{ options.name }}Client {
             case .failure(let error):
                 let error = APIClientError.validationError(error)
                 let response = {{ options.name }}Response<T>(request: request, result: .failure(error), urlRequest: urlRequest)
-                requestBehaviour.onFailure(response: HTTPURLResponse(), error: error)
+                requestBehaviour.onFailure(urlRequest: urlRequest, response: HTTPURLResponse(), error: error)
                 complete(response)
             }
         }
@@ -152,7 +152,7 @@ public class {{ options.name }}Client {
                             apiError = APIClientError.networkError(URLRequestError.responseInvalid)
                         }
                         let result: APIResult<T> = .failure(apiError)
-                        requestBehaviour.onFailure(response: HTTPURLResponse(), error: apiError)
+                        requestBehaviour.onFailure(urlRequest: urlRequest, response: HTTPURLResponse(), error: apiError)
 
                         let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest)
                         requestBehaviour.onResponse(response: response.asAny())
@@ -198,7 +198,7 @@ public class {{ options.name }}Client {
         if let error = error {
             let apiError = APIClientError.networkError(error)
             result = .failure(apiError)
-            requestBehaviour.onFailure(response: response, error: apiError)
+            requestBehaviour.onFailure(urlRequest: urlRequest, response: response, error: apiError)
             let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
             requestBehaviour.onResponse(response: response.asAny())
 
@@ -261,7 +261,7 @@ public class {{ options.name }}Client {
         guard let data = data else {
             let error = APIClientError.invalidDataError
             result = .failure(error)
-            requestBehaviour.onFailure(response: response, error: error)
+            requestBehaviour.onFailure(urlRequest: urlRequest, response: response, error: error)
             let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: nil)
             requestBehaviour.onResponse(response: response.asAny())
 
@@ -278,7 +278,7 @@ public class {{ options.name }}Client {
             if decoded.successful {
                 requestBehaviour.onSuccess(result: decoded.response as Any)
             } else {
-                requestBehaviour.onFailure(response: response, error: .unexpectedStatusCode(statusCode: statusCode, data: data))
+                requestBehaviour.onFailure(urlRequest: urlRequest, response: response, error: .unexpectedStatusCode(statusCode: statusCode, data: data))
             }
         } catch let error {
             let apiError: APIClientError
@@ -291,7 +291,7 @@ public class {{ options.name }}Client {
             }
 
             result = .failure(apiError)
-            requestBehaviour.onFailure(response: response, error: apiError)
+            requestBehaviour.onFailure(urlRequest: urlRequest, response: response, error: apiError)
         }
 
         let response = {{ options.name }}Response<T>(request: request, result: result, urlRequest: urlRequest, urlResponse: response, data: data)
