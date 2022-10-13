@@ -40,7 +40,7 @@ struct {{ options.name }}RequestBehaviourImplementation: {{ options.name }}Reque
         let url = urlRequest?.url?.absoluteString ?? response.url?.absoluteString ?? "invalid url"
         switch error {
         case .networkError(let error) where (error as NSError).code == NSURLErrorCancelled:
-            SDKLogger.i("[{{ options.name }}] Request with url (\(url)) was canceled.")
+            SDKLogger.v("[{{ options.name }}] Request with url (\(url)) was canceled.")
 
         default:
             let requestId: String = response.allHeaderFields["request-id"] as? String ?? "unknown"
