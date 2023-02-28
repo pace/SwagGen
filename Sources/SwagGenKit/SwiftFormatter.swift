@@ -384,48 +384,58 @@ public class SwiftFormatter: CodeFormatter {
 
                 for property in allProperties {
                     let relationshipPropertyName = property["name"] as! String
-                    let relationshipPropertyType = capitalizeFirstLetter(in: relationshipPropertyName)
+                    var relationshipPropertyType = property["type"] as! String
+                    var relationshipPropertySchema: Context
+                    var isArray = false
 
-                    guard let schemas = property["schemas"] as? [Context],
-                          let dataTypeSchema = schemas.first(where: { ($0["type"] as! String) == "DataType" }),
-                          let dataTypeEnums = dataTypeSchema["enums"] as? [Context],
-                          let typeEnum = dataTypeEnums.first(where: { ($0["enumName"] as! String) == "\(modelPrefix)Type" }),
-                          let typeEnumValues = (typeEnum["enums"] as? [Context])?.first,
-                          let typeName = typeEnumValues["value"] as? String
-                    else {
-                        // If there is no schemas for this property use relationship type as model type
-                        var type = relationshipPropertyType
-
-                        if !type.hasPrefix(modelPrefix) {
-                            type = "\(modelPrefix)\(relationshipPropertyType)"
+                    if let innerSchemas = property["schemas"] as? [Context],
+                       let innerSchema = innerSchemas.first { // If the Relationship is defined inline
+                        relationshipPropertySchema = innerSchema
+                    } else { // Else it must be defined as a reference
+                        if let props = property["allProperties"] as? [Context], // If it is a nested definition we have to dig deeper for the referenced type name
+                           let prop = props.first,
+                           !prop.isEmpty {
+                            relationshipPropertyType = prop["type"] as! String
+                            if prop["isArray"] as! Bool {
+                                relationshipPropertyType = relationshipPropertyType.replacingOccurrences(of: "[", with: "")
+                                relationshipPropertyType = relationshipPropertyType.replacingOccurrences(of: "]", with: "")
+                            }
                         }
-
-                        if let propertyIndex = properties.firstIndex(where: { ($0["name"] as! String) == relationshipPropertyName }) {
-                            properties[propertyIndex]["type"] = type
-                            properties[propertyIndex]["optionalType"] = "\(type)?"
+                        guard let innerSchema = schemas.first(where: { $0["type"] as! String == relationshipPropertyType }) else {
+                            fatalError("Failed to retrieve correct type name for the relationship: \(relationshipPropertyName) with type \(relationshipPropertyType)")
                         }
-                        continue
+                        if let innerInnerSchemas = innerSchema["schemas"] as? [Context],
+                           let innerInnerSchema = innerInnerSchemas.first { // Check if referenced relation is nested again
+                            if let innerProperties = innerSchema["allProperties"] as? [Context],
+                               let innerProperty = innerProperties.first,
+                               let innerIsArray = innerProperty["isArray"] as? Bool { // check if type is nested inside an array
+                                isArray = innerIsArray
+                            }
+                            relationshipPropertySchema = innerInnerSchema
+                        } else { // Else the referenced type inside the relation can be derived directly
+                            relationshipPropertySchema = innerSchema
+                        }
                     }
 
-                    var type = "\(modelPrefix)\(capitalizeFirstLetter(in: typeName))"
-
-                    // Check if relationshipPropertyType is array
-                    guard let relationshipSchemas = relationship["schemas"] as? [Context],
-                          let relationshipSchema = relationshipSchemas.first(where: { ($0["type"] as! String) == relationshipPropertyType }),
-                          let relationshipProperties = relationshipSchema["allProperties"] as? [Context],
-                          let dataProperty = relationshipProperties.first(where: { ($0["name"] as! String) == "data" })
-                    else { continue }
-
-                    let isArray = (dataProperty["isArray"] as? Bool) ?? false
-
-                    guard let propertyIndex = properties.firstIndex(where: { ($0["name"] as! String) == relationshipPropertyName }) else { continue }
-
-                    if isArray {
-                        type = "[\(type)]"
+                    guard let outerEnums = relationshipPropertySchema["enums"] as? [Context],
+                       let outerEnum = outerEnums.first,
+                       let innerEnums = outerEnum["enums"] as? [Context],
+                       let innerEnum = innerEnums.first,
+                       let typeName = innerEnum["value"] as? String else {
+                        fatalError("Could not retrieve the type for relation \(relationshipPropertyName)")
                     }
 
-                    properties[propertyIndex]["type"] = type
-                    properties[propertyIndex]["optionalType"] = "\(type)?"
+                    if let allInnerProperties = property["allProperties"] as? [Context],
+                          let innerProperty = allInnerProperties.first {
+                        isArray = innerProperty["isArray"] as? Bool ?? false
+                    }
+
+                    let type = "\(modelPrefix)\(capitalizeFirstLetter(in: typeName))"
+
+                    guard let propertyIndex = properties.firstIndex(where: { ($0["name"] as! String) == relationshipPropertyName }) else { fatalError() }
+
+                    properties[propertyIndex]["type"] = isArray ? "[\(type)]" : type
+                    properties[propertyIndex]["optionalType"] = isArray ? "[\(type)]?" : "\(type)?"
                 }
             }
 
