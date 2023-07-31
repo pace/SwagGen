@@ -355,19 +355,6 @@ public class KotlinFormatter: CodeFormatter {
         return context
     }
 
-    override func getOperationContext(_ operation: Swagger.Operation) -> Context {
-        var context = super.getOperationContext(operation)
-        if let requirements = context["securityRequirements"] as? [[String: Any?]],
-           requirements.contains(where: {
-            guard let value = $0["name"] as? String else { return false }
-            return value == "OAuth2" || value == "OIDC"
-           }) {
-            context["authorizationRequired"] = true
-        }
-
-        return context
-    }
-    
     override func getEscapedType(_ name: String) -> String {
         return "`\(name)`"
     }

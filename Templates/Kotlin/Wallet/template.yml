@@ -1,0 +1,56 @@
+formatter: kotlin
+options:
+  name: WalletAPI # the name of the API
+  packageName: cloud.pace.sdk.api.wallet.generated
+  apiPackageName: cloud.pace.sdk.api.wallet
+  fixedWidthIntegers: false # whether to use types like Int32 and Int64
+  mutableModels: true # whether model properties are mutable
+  safeOptionalDecoding: false # set invalid optionals to nil instead of throwing
+  safeArrayDecoding: false # filter out invalid items in array instead of throwing
+  modelPrefix: null # applied to model classes and enums
+  modelSuffix: null # applied to model classes
+  modelType: class # can be struct or class
+  modelInheritance: true # must be false for struct modelType
+  modelProtocol: WalletAPI # the protocol all models conform to
+  modelNames: {} # override model type names
+  enumNames: {} # override enum type names
+  enumUndecodableCase: false # whether to add undecodable case to enums
+  codableResponses: false # constrains all responses/model to be Codable
+  propertyNames: {} # override property names
+  anyType: Any # override Any in generated models
+  baseURL: https://api.pace.cloud # override given base url from swagger file
+  urlPath: wallet
+  typeAliases:
+  modelDependencies:
+    - path: com.google.gson.annotations.SerializedName
+    - path: com.squareup.moshi.Json
+    - path: moe.banana.jsonapi2.HasMany
+    - path: moe.banana.jsonapi2.HasOne
+    - path: moe.banana.jsonapi2.JsonApi
+    - path: moe.banana.jsonapi2.Resource
+    - path: java.util.Date
+  apiDependencies:
+    - path: cloud.pace.sdk.api.request.BaseRequest
+    - path: cloud.pace.sdk.api.wallet.WalletAPI
+    - path: cloud.pace.sdk.api.wallet.generated.model.*
+    - path: cloud.pace.sdk.utils.toIso8601
+    - path: com.google.gson.annotations.SerializedName
+    - path: com.squareup.moshi.Json
+    - path: okhttp3.ResponseBody
+    - path: retrofit2.Call
+    - path: retrofit2.http.*
+    - path: java.io.File
+    - path: java.util.Date
+    - path: java.util.concurrent.TimeUnit
+templateFiles:
+  - path: Common/Sources/ServiceAPI.kt
+    destination: "wallet/WalletAPI.kt"
+  - path: Common/Sources/Model.kt
+    context: schemas
+    destination: "wallet/generated/model/{{ type }}.kt"
+  - path: Common/Sources/BodyModel.kt
+    context: bodySchemas
+    destination: "wallet/generated/model/{{ type }}Body.kt"
+  - path: Common/Sources/ModelAPI.kt
+    context: operations
+    destination: "wallet/generated/request{% if tag %}/{{ tag|lowerCamelCase }}{% endif %}/{{ type }}API.kt"

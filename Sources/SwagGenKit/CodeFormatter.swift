@@ -363,6 +363,14 @@ public class CodeFormatter {
         context["securityRequirement"] = securityRequirements?.first.flatMap(getSecurityRequirementContext)
         context["securityRequirements"] = securityRequirements?.map(getSecurityRequirementContext)
 
+        if let requirements = context["securityRequirements"] as? [[String: Any?]],
+           requirements.contains(where: {
+               guard let value = $0["name"] as? String else { return false }
+               return value == "OAuth2" || value == "OIDC" || value == "keycloak"
+           }) {
+            context["authorizationRequired"] = true
+        }
+
         // Responses
 
         let responses = operation.responses
