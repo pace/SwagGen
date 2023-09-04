@@ -47,7 +47,7 @@ templateFiles:
     destination: "wallet/WalletAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "wallet/generated/model/{{ type }}.kt"
+    destination: "wallet/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "wallet/generated/model/{{ type }}Body.kt"

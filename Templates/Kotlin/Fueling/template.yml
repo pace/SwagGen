@@ -47,7 +47,7 @@ templateFiles:
     destination: "fueling/FuelingAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "fueling/generated/model/{{ type }}.kt"
+    destination: "fueling/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "fueling/generated/model/{{ type }}Body.kt"

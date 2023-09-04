@@ -47,7 +47,7 @@ templateFiles:
     destination: "poi/POIAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "poi/generated/model/{{ type }}.kt"
+    destination: "poi/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "poi/generated/model/{{ type }}Body.kt"

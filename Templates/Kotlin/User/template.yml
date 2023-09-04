@@ -47,7 +47,7 @@ templateFiles:
     destination: "user/UserAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "user/generated/model/{{ type }}.kt"
+    destination: "user/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "user/generated/model/{{ type }}Body.kt"
