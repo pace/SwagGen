@@ -47,7 +47,7 @@ templateFiles:
     destination: "pay/PayAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "pay/generated/model/{{ type }}.kt"
+    destination: "pay/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "pay/generated/model/{{ type }}Body.kt"

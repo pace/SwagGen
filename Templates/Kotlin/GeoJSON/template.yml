@@ -47,7 +47,7 @@ templateFiles:
     destination: "geojson/GeoJSONAPI.kt"
   - path: Common/Sources/Model.kt
     context: schemas
-    destination: "geojson/generated/model/{{ type }}.kt"
+    destination: "geojson/generated/model/{{ type }}Model.kt"
   - path: Common/Sources/BodyModel.kt
     context: bodySchemas
     destination: "geojson/generated/model/{{ type }}Body.kt"
