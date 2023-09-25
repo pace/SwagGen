@@ -366,7 +366,7 @@ public class {{ options.name }}Client {
     }
 }
 
-@available(iOS 13.0, watchOS 6.0, *) @MainActor
+@MainActor
 public extension {{ options.name }}Client {
     /// Makes a network request
     ///
