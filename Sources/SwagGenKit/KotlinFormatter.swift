@@ -58,6 +58,28 @@ public class KotlinFormatter: CodeFormatter {
         }
         
         for index in filteredSchemas.indices {
+            let schemaContext = filteredSchemas[index]
+            var resourceType = getResourceType(context: schemaContext)
+            
+            if resourceType == nil {
+                let type = (schemaContext["properties"] as? [Context])?.first?["type"] as? String
+                let schema = spec.components.schemas.first(where: {$0.name == type})
+                if let schema = schema {
+                    let context = getSchemaContent(schema)
+                    resourceType = getResourceType(context: context)
+                } else {
+                    let allProperties = schemaContext["allProperties"] as? [Context]
+                    let type = allProperties?.first(where: {$0["name"] as? String == "type"})?["type"] as? String
+                    let referencedSchema = spec.components.schemas.first(where: {$0.name == type})
+                    if let referencedSchema = referencedSchema {
+                        let referencedContext = getSchemaContent(referencedSchema)
+                        resourceType = getResourceType(context: referencedContext)
+                    }
+                }
+            }
+            
+            filteredSchemas[index]["resourceType"] = resourceType
+            
             var relationships = filteredSchemas[index]["relationships"] as? [Context] ?? []
             for index in relationships.indices {
                 var newProperties: [Context] = []
@@ -90,12 +112,17 @@ public class KotlinFormatter: CodeFormatter {
                             }
                         } else {
                             let dataProperties = component.value.properties.first(where: {$0.name == "data"})?.schema.properties
-                            let type = dataProperties?.first(where: {$0.name == "type"})
-                            let enumValue = type?.enumValue?.cases.first as? String
-                            if let enumValue = enumValue {
-                                // Is relationship reference class e.g. PaymentMethodVendorRelationship
-                                // Find correct schema e.g. PaymentMethodVendor
-                                let schema = spec.components.schemas.first(where: {$0.name.lowercased() == enumValue.lowercased()})
+                            let raw = property["raw"] as? Context
+                            let reference = raw?["$ref"] as? String
+                            let last = reference?.split(separator: "/").last
+                            
+                            if dataProperties == nil && last != nil {
+                                // Discount relationship
+                                let referenceType = String(last!)
+                                let referenceComponent = schemas.first(where: {$0["type"] as? String == referenceType})
+                                let referenceProperties = referenceComponent?["properties"] as? [Context]
+                                let hasMany = referenceProperties?.first(where: {$0["name"] as? String == "data"})?["isArray"]
+                                let schema = spec.components.schemas.first(where: {$0.name == type})
                                 if let schema = schema {
                                     var context = getSchemaContent(schema)
                                     context["name"] = name
@@ -103,11 +130,25 @@ public class KotlinFormatter: CodeFormatter {
                                     newProperties.append(context)
                                 }
                             } else {
-                                // Is already the correct schema e.g. GasStation
-                                var context = getSchemaContent(component)
-                                context["name"] = name
-                                context["hasMany"] = hasMany
-                                newProperties.append(context)
+                                let type = dataProperties?.first(where: {$0.name == "type"})
+                                let enumValue = type?.enumValue?.cases.first as? String
+                                if let enumValue = enumValue {
+                                    // Is relationship reference class e.g. PaymentMethodVendorRelationship
+                                    // Find correct schema e.g. PaymentMethodVendor
+                                    let schema = spec.components.schemas.first(where: {$0.name.lowercased() == enumValue.lowercased()})
+                                    if let schema = schema {
+                                        var context = getSchemaContent(schema)
+                                        context["name"] = name
+                                        context["hasMany"] = hasMany
+                                        newProperties.append(context)
+                                    }
+                                } else {
+                                    // Is already the correct schema e.g. GasStation
+                                    var context = getSchemaContent(component)
+                                    context["name"] = name
+                                    context["hasMany"] = hasMany
+                                    newProperties.append(context)
+                                }
                             }
                         }
                     }
@@ -131,20 +172,50 @@ public class KotlinFormatter: CodeFormatter {
         var operations = context["operations"] as? [Context] ?? []
         for index in operations.indices {
             let successResponse = operations[index]["successResponse"] as? Context
-            if var successResponse = successResponse {
+            var successResponseType: String? = nil
+            
+            if let successResponse = successResponse {
                 let successResponseSchema = successResponse["schema"] as? Context
                 let schema = (successResponseSchema?["properties"] as? [Context])?.first
+                
+                successResponseType = schema?["type"] as? String
+                if successResponseType == nil {
+                    successResponseType = (successResponseSchema)?["type"] as? String
+                }
+                
                 if let schema = schema {
                     let resources = getResources(schemaContext: schema, allSchemas: filteredSchemas)
-                    successResponse["resources"] = Array(Set(resources))
-                    operations[index]["successResponse"] = successResponse
+                    operations[index]["resources"] = Array(Set(resources)).sorted()
                 }
             }
+            
+            if successResponseType == "File" {
+                successResponseType = "ResponseBody"
+            }
+            
+            if let responseType = successResponseType {
+                let schema = spec.components.schemas.first(where: {$0.name.lowercased() == responseType.lowercased()})
+                let type = schema?.value.properties.first(where: {$0.name == "data"})?.schema.type
+                if case .array = type {
+                    // Add List to response type if data is an array e.g. RegionalPrices should be List<RegionalPrices>
+                    successResponseType = "List<\(responseType)>"
+                }
+            }
+            
+            operations[index]["successResponseType"] = successResponseType ?? "ResponseBody"
         }
         
         context["operations"] = operations
         
         return context
+    }
+    
+    private func getResourceType(context: Context) -> String? {
+        let firstSchema = (context["schemas"] as? [Context])?.first
+        let firstEnum = (context["enums"] as? [Context])?.first ?? (firstSchema?["enums"] as? [Context])?.first ?? (context["enum"] as? Context)
+        let enumValue = (firstEnum?["enums"] as? [Context])?.first
+        
+        return enumValue?["value"] as? String
     }
     
     private func getResources(schemaContext: Context, allSchemas: [Context], allResources: [String] = []) -> [String] {
@@ -252,7 +323,14 @@ public class KotlinFormatter: CodeFormatter {
             if (firstPropertyName == "data") {
                 let type = firstProperty?.schema.metadata.type
                 if case .array = type {
-                    return "List<\(reference.name)>"
+                    let schemaType = reference.component.value.type.object?.properties.first?.schema.type
+                    if case .array(let arraySchema) = schemaType, case .single(let singleItem) = arraySchema.items {
+                        let enumValue = singleItem.type.object?.properties.first(where: {$0.name == "type"})?.schema.metadata.enumValues?.first as? String
+                        let referencesSchemaName = spec.components.schemas.first(where: {$0.name.lowercased() == enumValue?.lowercased()})?.name as? String
+                        if let referencesSchemaName {
+                            return referencesSchemaName
+                        }
+                    }
                 }
             }
             return getSchemaTypeName(reference.component)

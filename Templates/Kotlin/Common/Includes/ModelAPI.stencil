@@ -22,7 +22,7 @@ object {{ type }}API {
             {% endif %}
             @retrofit2.http.Body {{ body.name }}: {{ body.optionalType }}
             {% endif %}
-        ): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}ResponseBody{% endif %}>
+        ): Call<{{ successResponseType }}>
     }
     {% for enum in requestEnums where not enum.isGlobal %}
 
@@ -52,11 +52,11 @@ object {{ type }}API {
             {% if successResponse.schema.raw.type  == "object" and successResponse.acceptHeaderEnums.count > 1 %}accept: {{type}}AcceptHeader? = null,{% endif %}
             additionalHeaders: Map<String, String>? = null,
             additionalParameters: Map<String, String>? = null
-        ): Call<{% if successResponse.schema.properties.first.type %}{{ successResponse.schema.properties.first.type }}{% elif successResponse.schema.type and successResponse.schema.type != "File" %}{{ successResponse.schema.type }}{% else %}ResponseBody{% endif %}> {
-            {% if successResponse.resources.count > 0 %}val resources = listOf({% for resource in successResponse.resources %}{{ resource }}::class.java{% ifnot forloop.last %},{% endif %}{% endfor %}){% endif %}
+        ): Call<{{ successResponseType }}> {
+            {% if resources.count > 0 %}val resources = listOf({% for resource in resources %}{{ resource }}::class.java{% ifnot forloop.last %},{% endif %}{% endfor %}){% endif %}
             val headers = headers({% if authorizationRequired == true %}true{% else %}false{% endif %}, {% if successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, {% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}null{% elif successResponse.schema.raw.type == "object" %}"application/vnd.api+json"{% elif contentType %}"{{contentType}}"{% else %}"application/json"{% endif %}, additionalHeaders)
 
-            return retrofit({{ options.modelProtocol }}.baseUrl, additionalParameters, readTimeout, {% if successResponse.resources.count > 0 %}resources{% endif %})
+            return retrofit({{ options.modelProtocol }}.baseUrl, additionalParameters, readTimeout, {% if resources.count > 0 %}resources{% endif %})
                 .create({{ type|upperCamelCase }}Service::class.java)
                 .{{ type|lowerCamelCase }}(
                     headers{% for param in nonBodyParams %},
@@ -82,7 +82,7 @@ object {{ type }}API {
         {% endfor %}
         {% if body %}{{ body.name }},{% endif %}
         readTimeout,
-        {% if successResponse.schema.raw.type  == "object" and successResponse.acceptHeaderEnums.count > 1 %}accept,{% endif %}
+        {% if successResponse.schema.raw.type == "object" and successResponse.acceptHeaderEnums.count > 1 %}accept,{% endif %}
         additionalHeaders,
         additionalParameters
     )
