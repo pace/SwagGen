@@ -11,7 +11,7 @@ typealias {{ type }} = {{ aliasType }}
 {% endif %}
 {% if type != "Data" %}
 {% if isResource %}
-@JsonApi(type = "{{ type|lowerCamelCase }}")
+@JsonApi(type = "{{ resourceType }}")
 class {{ type }} : Resource() {
 {% else %}
 class {{ type }} {
