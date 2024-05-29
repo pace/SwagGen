@@ -57,6 +57,8 @@ templateFiles:
     destination: "./../../Generated/Common/AnyCodable.swift"
   - path: Common/URLEncoding.swift
     destination: "./../../Generated/Common/URLEncoding.swift"
+  - path: Common/APIContainer.swift
+    destination: "./../../Generated/Common/API.swift"
   - path: Common/Enum.swift
     context: enums
     destination: "Enums/{{ enumName }}.swift"
