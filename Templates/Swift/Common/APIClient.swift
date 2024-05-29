@@ -269,8 +269,8 @@ public class {{ options.name }}Client {
         if response.statusCode == HttpStatusCode.unauthorized.rawValue
             && currentUnauthorizedRetryCount < maxUnauthorizedRetryCount
             && IDKit.isSessionAvailable {
-            IDKit.apiInducedRefresh { [weak self] error in
-                guard let error = error else {
+            IDKit.refreshToken { [weak self] result in
+                guard case .failure(let error) = result else {
                     self?.makeRequest(request,
                                       behaviours: requestBehaviour.behaviours,
                                       currentUnauthorizedRetryCount: currentUnauthorizedRetryCount + 1,
