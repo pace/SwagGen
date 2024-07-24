@@ -12,6 +12,7 @@ public class {{ options.name }}Request<ResponseType: APIResponseValue> {
     public var customHeaders: [String: String] = [:]
     public var version: String = "{{ info.version }}"
     public var contentType: String = "application/json"
+    public private(set) var isAuthorizationRequired: Bool = false
 
     public var headers: [String: String] {
         return headerParameters.merging(customHeaders) { param, custom in return custom }

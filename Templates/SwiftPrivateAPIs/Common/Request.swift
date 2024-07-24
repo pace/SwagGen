@@ -158,26 +158,14 @@ extension {{ options.name }}{% if tag %}.{{ options.tagPrefix }}{{ tag|upperCame
                 headers["{{ param.value }}"] = {% if param.type == "String" %}options.{{ param.encodedValue }}{% else %}String(describing: options.{{ param.encodedValue }}){% endif %}
                 {% endif %}
                 {% endfor %}
-                {% if authorizationRequired %}
-                if let token = API.accessToken {
-                    headers["Authorization"] = "Bearer \(token)"
-                }
-                {% endif %}
 
                 return headers
             }
-            {% else %}
-            {% if authorizationRequired %}
+            {% endif %}
 
-            override var headerParameters: [String: String] {
-                var headers: [String: String] = [:]
-                if let token = API.accessToken {
-                    headers["Authorization"] = "Bearer \(token)"
-                }
-                return headers
+            public override var isAuthorizationRequired: Bool {
+                {% if authorizationRequired == true %}true{% else %}false{% endif %}
             }
-            {% endif %}
-            {% endif %}
         }
 
         public enum Response: APIResponseValue, CustomStringConvertible, CustomDebugStringConvertible {

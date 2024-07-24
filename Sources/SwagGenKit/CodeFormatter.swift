@@ -369,6 +369,8 @@ public class CodeFormatter {
                return value == "OAuth2" || value == "OIDC" || value == "keycloak"
            }) {
             context["authorizationRequired"] = true
+        } else {
+            context["authorizationRequired"] = false
         }
 
         // Responses
